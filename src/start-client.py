@@ -4,7 +4,7 @@ if __name__ == "__main__":
     udp_client = SocketWrapper()
 
     server_address = ("127.0.0.1", 6969)
-    udp_client.bind("127.0.0.1", 0)  # Puerto local aleatorio
+    udp_client.bind("127.0.0.1", 0)
 
     print("Conectándose al servidor UDP...")
     udp_client.sendto("¡Hola, servidor!", server_address)

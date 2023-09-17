@@ -1,17 +1,22 @@
 from lib.socket_wrapper import SocketWrapper
 
-if __name__ == "__main__":
-    udp_client = SocketWrapper()
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 12345
 
-    server_address = ("127.0.0.1", 6969)
-    udp_client.bind("127.0.0.1", 0)
+client_socket = SocketWrapper()
 
-    print("Conectándose al servidor UDP...")
-    udp_client.sendto("¡Hola, servidor!", server_address)
+while True:
+    try:
+        message = input("Escribe un mensaje para el servidor: ")
+        if message.lower() == 'exit':
+            break
+        client_socket.sendto(message, (SERVER_HOST, SERVER_PORT))
 
-    while True:
-        message, server_address = udp_client.recvfrom(1024)
-        print(f"Recibido (UDP) desde {server_address}: {message}")
+        response, server_address = client_socket.recvfrom(1024)
+        print(f"Respuesta del servidor: {response}")
 
-        response = input("Respuesta: ")
-        udp_client.sendto(response, server_address)
+    except KeyboardInterrupt:
+        print("Cliente detenido")
+        break
+
+client_socket.close()

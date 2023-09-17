@@ -12,7 +12,9 @@ class SocketWrapper:
 
     # Envia un mensaje a la direccion especificada
     def sendto(self, data, address):
-        self.socket.sendto(data.encode(), address)
+        if isinstance(data, str):
+            data = data.encode()
+        self.socket.sendto(data, address)
 
     # Recibe un mensaje de un cliente
     # El tamaño del mensaje deberia ser diferente segun el protocolo de envio?

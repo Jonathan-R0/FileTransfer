@@ -22,6 +22,11 @@ class SocketWrapper:
         data, address = self.socket.recvfrom(buffer_size)
         return data.decode(), address
 
+    def listen(self) -> tuple[str, _RetAddress]:
+        """Escucha a un cliente."""
+        data, address = self.recvfrom(1024)
+        return data, address
+
     def close(self) -> None:
         """Cierra el socket."""
         self.socket.close()

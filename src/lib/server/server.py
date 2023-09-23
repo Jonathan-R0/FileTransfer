@@ -13,5 +13,6 @@ class Server:
         self.clients_lock = Lock()
         self.socket_wrapper = SocketWrapper(self.host, self.port)
 
-    def start(self):
+    def start(self) -> None:
         logging.debug(' Listening...')
+        self.socket_wrapper.listen()

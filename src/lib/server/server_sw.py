@@ -1,7 +1,7 @@
 from threading import Lock
 from lib.server.server_client_download import ServerClientDownload
 from lib.server.server_client_upload import ServerClientUpload
-from lib.common.package import Package
+from lib.common.package import PackageParser
 from lib.common.socket_wrapper import SocketWrapper
 import logging
 
@@ -20,15 +20,30 @@ class ServerStopAndWait:
             data, address = self.socket_wrapper.recvfrom()
             logging.debug(f' Received data from {address}: {data}')
             try:
-                package = Package.parse_data(data)
+                package = PackageParser.parse_handshake_package(data)
+                if package.is_upload:
+                    self.add_client(ServerClientUpload(address, package.file_name, package.file_size, self.dirpath))
+                else:
+                    self.add_client(ServerClientDownload(address, package.file_name, self.dirpath))
             except:
-                logging.debug(' Invalid package')
-                continue
+                try:
+                    package = PackageParser.parse_normal_package(data)
+                    for client in self.clients:
+                        if client.address == address:
+                            client.process_package(package) ## TODO implementar
+                except:
+                    logging.debug(' Invalid package')
+                    continue
 
-            if package.is_initial_message():
-                self.handle_initial_message(package, address)
-            else:
-                self.handle_data(package, address)
+
+    def add_client(self, client: ServerClientDownload) -> None:
+        if client not in self.clients:
+            with self.clients_lock:
+                self.clients.append(client)
+        #como sigue?
+        #el cliente deberia tener un metodo que se encargue de recibir los paquetes
+        #tambien saber todo lo que tiene que saber del archivo
+
 
 
 

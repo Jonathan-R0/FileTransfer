@@ -1,6 +1,5 @@
 import threading
-from lib.socket_wrapper import SocketWrapper
-from lib.server.server import Server
+from lib.server.server_sw import Server
 from lib.server.server_args import server_args
 import logging
 

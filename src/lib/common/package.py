@@ -16,6 +16,13 @@ class PackageParser:
         package = HandshakePackage(package_data[0], package_data[1], package_data[2], file_name[0].decode())
         return package
 
+    def pack_handshake_return(self, package) -> bytes:
+        package = HandshakePackage(package.is_upload, package.file_size, package.file_name_size, package.file_name)
+        return package.pack_handshake_return()
+
+    def pack_normal_package_return(self, package) -> bytes:
+        package = NormalPackage(package.ack, package.seq, package.size, package.end, package.data)
+        return package.pack_normal_package_return()
 
 class HandshakePackage:
     
@@ -24,6 +31,11 @@ class HandshakePackage:
             self.file_size = file_size
             self.file_name = file_name
             self.file_name_size = file_name_size
+
+        def pack_handshake_return(self) -> bytes:
+            '''Returns the handshake package to be sent to the client, also adds the seq number as a zero'''
+            return struct.pack(f'!?II{self.file_name_size}sI', self.is_upload, self.file_size, self.file_name_size, self.file_name.encode(), 0)
+
 
 
 class NormalPackage:
@@ -35,19 +47,6 @@ class NormalPackage:
         self.end = end
         self.data = data
 
-
-
-#packeo un paquete de xS letras
-package = NormalPackage(2, 3, 25, True, b'probando probando 123123123123')
-a = struct.pack(f'!III?{package.size}s', package.ack, package.seq, package.size, package.end, package.data)
-
-#desempaqueto el header del paquete para obtener el tamaño de la data
-header_from_package = struct.unpack('!III?', a[:13])
-len_data = header_from_package[2]
-print(f"el tamaño de la data es: {len_data}")
-
-#desempaqueto el contenido del paquete
-data_from_package = struct.unpack(f'!{len_data}s', a[13:])
-print(f"el paquete contiene: {data_from_package[0].decode()}")
-
-
+    def pack_normal_package_return(self) -> bytes:
+        '''Returns the normal package to be sent to the client. Adds +1 to the seq number'''
+        return struct.pack(f'!III?{self.size}s', self.ack, self.seq + 1, self.size, self.end, self.data)

@@ -32,7 +32,7 @@ class ServerStopAndWait:
                         if client.address == address:
                             client.already_client = True
                     self.process_package(package)
-                    NormalPackage.return_normal_package(address)
+                    self.return_normal_package(package, address)
 
                 except:
                     logging.debug(' Invalid package')
@@ -41,30 +41,29 @@ class ServerStopAndWait:
 
 
 
-    def process_handshake_package(self, package: PackageParser) -> None:
+    def process_handshake_package(self, package: HandshakePackage) -> None:
         if package.is_upload:
-            self.add_client(ServerClientUpload(package.address, package.file_name, package.file_size, self.dirpath))
-        else:
-            self.add_client(ServerClientDownload(package.address, package.file_name, self.dirpath))
+            #procesar paquetito
+            pass
 
 
 
-    def return_handshake_package(self, package: PackageParser, address: tuple) -> None:
-        package = package.pack_handshake_return()
+    def return_handshake_package(self, package: HandshakePackage, address: tuple) -> None:
+        package = package.pack_handshake_return(package)
         self.socket_wrapper.sendto(package, address)
 
         
 
-    def process_package(self, package: PackageParser) -> None:
+    def process_package(self, package: NormalPackage) -> None:
         if package.is_upload:
-            self.process_upload_package(package)
-        else:
-            self.process_download_package(package)
+            #procesar paquetito
+            pass
 
 
-    def return_normal_package(self, package: PackageParser, address: tuple) -> None:
-        package = package.pack_normal_package_return(package) #aca deberia recibir el paquete para que pueda usar sus atributos
+    def return_normal_package(self, package: NormalPackage, address: tuple) -> None:
+        package = package.pack_normal_package_return(package)
         self.socket_wrapper.sendto(package, address)
+
 
     def add_client(self, client: ServerClientDownload) -> None:
         if client not in self.clients:
@@ -73,10 +72,3 @@ class ServerStopAndWait:
         #como sigue?
         #el cliente deberia tener un metodo que se encargue de recibir los paquetes
         #tambien saber todo lo que tiene que saber del archivo
-
-
-
-
-            
-
-            

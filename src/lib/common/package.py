@@ -13,16 +13,8 @@ class PackageParser:
     def parse_handshake_package(data: bytes):
         package_data = struct.unpack('!?II', data[:9])
         file_name = struct.unpack(f'!{package_data[2]}s', data[9:])
-        package = HandshakePackage(package_data[0], package_data[1], package_data[2], file_name[0].decode())
+        package = HandshakePackage(package_data[0], package_data[1], file_name, file_name[0].decode())
         return package
-
-    def pack_handshake_return(self, package) -> bytes:
-        package = HandshakePackage(package.is_upload, package.file_size, package.file_name_size, package.file_name)
-        return package.pack_handshake_return()
-
-    def pack_normal_package_return(self, package) -> bytes:
-        package = NormalPackage(package.ack, package.seq, package.size, package.end, package.data)
-        return package.pack_normal_package_return()
 
 class HandshakePackage:
     

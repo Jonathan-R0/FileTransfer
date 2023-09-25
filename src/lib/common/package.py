@@ -1,37 +1,37 @@
 import struct
 
 
-class PackageParser:
+class InitialHandshakePackage:
 
-    @staticmethod
-    def parse_normal_package(data: bytes | str):
-        header_from_package = struct.unpack('!III?', data[:13])
-        data_from_package = struct.unpack(f'!{package.size}s', data[13:])
-        package = NormalPackage(header_from_package[0], header_from_package[1], header_from_package[2],
-                                header_from_package[3], data_from_package)
-        return package
-
-    @staticmethod
-    def parse_handshake_package(data: bytes | str):
-        package_data = struct.unpack('!?II', data[:9])
-        file_name = struct.unpack(f'!{package_data[2]}s', data[9:])
-        package = HandshakePackage(package_data[0], package_data[1], file_name, file_name[0].decode())
-        return package
-
-
-class HandshakePackage:
-
-    def __init__(self, is_upload: bool, file_size: int, file_name_size: int, file_name: str):
+    def __init__(self, is_upload: bool, file_size: int, file_name: str):
         self.is_upload = is_upload
         self.file_size = file_size
         self.file_name = file_name
-        self.file_name_size = file_name_size
+
+    def pack_initial_handshake_return(self) -> bytes:
+        """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
+        return struct.pack(f'!?I{len(self.file_name)}sII', self.is_upload, self.file_size, self.file_name.encode())
+
+class HandshakePackage:
+
+    def __init__(self, is_upload: bool, file_size: int, file_name: str):
+        self.is_upload = is_upload
+        self.file_size = file_size
+        self.file_name = file_name
 
     def pack_handshake_return(self) -> bytes:
-        """Returns the handshake package to be sent to the client, also adds the seq number as a zero"""
-        return struct.pack(f'!?II{self.file_name_size}sI', self.is_upload, self.file_size, self.file_name_size,
-                           self.file_name.encode(), 0)
+        """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
+        return struct.pack(f'!?I{len(self.file_name)}sII', self.is_upload, self.file_size, self.file_name.encode(), 0, 0)
 
+class EndHandshakePackage:
+
+    def __init__(self, ack: int, seq: int):
+        self.ack = ack
+        self.seq = seq
+
+    def pack_end_handshake_return(self) -> bytes:
+        """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
+        return struct.pack(f'!II', self.ack, self.seq)
 
 class NormalPackage:
 

@@ -1,7 +1,8 @@
 from threading import Lock
 from server_client_download import ServerClientDownload
-from src.lib.common.package import PackageParser, NormalPackage, HandshakePackage
+from src.lib.common.package import NormalPackage, HandshakePackage
 from src.lib.common.socket_wrapper import SocketWrapper
+from src.lib.common.config import *
 import logging
 
 
@@ -15,32 +16,20 @@ class ServerStopAndWait:
         self.socket_wrapper = SocketWrapper()
         self.socket_wrapper.bind(self.host, self.port)
 
+
     def start(self) -> None:
         logging.debug(' Listening...')
         while True:
-            data, address = self.socket_wrapper.recvfrom(1024)
+            data, address = self.socket_wrapper.recvfrom(NORMAL_PACKAGE_SIZE)
             logging.debug(f' Received data from {address}: {data}')
 
-            try:
-                package = PackageParser.parse_handshake_package(data)
-                self.process_handshake_package(package)
-                self.return_handshake_package(package, address)
-
-            except:
-                logging.debug(' Invalid handshake')
-                continue
-
-            try:
-                package = PackageParser.parse_normal_package(data)
-                for client in self.clients:
-                    if client.address == address:
-                        client.already_client = True
-                self.process_package(package)
-                self.return_normal_package(package, address)
-
-            except:
-                logging.debug(' Invalid package')
-                continue
+            if address not in clients:
+                clients_lock.acquire()
+                clients.append(address) # TODO cambiar por una instancia de la clase cliente que corresponda, de ser necesario, de lo contrario borrarlas.
+                clients_lock.release()
+                incoming_package = PackageParser.parse_initial_message(data)
+            else:
+                pass
 
     def process_handshake_package(self, package: HandshakePackage) -> None:
         pass

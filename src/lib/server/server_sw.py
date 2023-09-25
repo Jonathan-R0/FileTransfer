@@ -1,9 +1,9 @@
 from threading import Lock
-from server_client_download import ServerClientDownload
-from server_client_upload import ServerClientUpload
-from src.lib.common.package import NormalPackage, HandshakePackage, AckSeqPackage, InitialHandshakePackage
-from src.lib.common.socket_wrapper import SocketWrapper
-from src.lib.common.config import *
+from lib.server.server_client_download import ServerClientDownload
+from lib.server.server_client_upload import ServerClientUpload
+from lib.common.package import NormalPackage, HandshakePackage, AckSeqPackage, InitialHandshakePackage
+from lib.common.socket_wrapper import SocketWrapper
+from lib.common.config import *
 import logging
 
 
@@ -26,9 +26,12 @@ class ServerStopAndWait:
 
             if address not in self.clients:
                 self.clients.append(address) # TODO cambiar por una instancia de la clase cliente que corresponda, de ser necesario, de lo contrario borrarlas.
-                incoming_package = InitialHandshakePackage(data)
-                first_ack_package = HandshakePackage(incoming_package)
-                self.socket_wrapper.sendto(address, first_ack_package.pack_handshake_return())
+                if isinstance(data, bytes):
+                    incoming_package = InitialHandshakePackage(data)
+                    first_ack_package = HandshakePackage(incoming_package)
+                    self.socket_wrapper.sendto(address, first_ack_package.pack_handshake_return())
+                else:
+                    print(data)
             else:
                 incoming_package = AckSeqPackage(data)
                 logging.debug(f' Received ack: {incoming_package.ack} and seq: {incoming_package.seq} from {address}')

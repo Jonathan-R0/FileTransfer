@@ -1,4 +1,4 @@
-from src.lib.server.server_sw import ServerStopAndWait
+from lib.server.server_sw import ServerStopAndWait
 from enum import Enum
 
 

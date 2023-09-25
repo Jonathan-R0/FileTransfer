@@ -8,4 +8,5 @@ if server_args.verbose:
 if __name__ == '__main__':
     logging.debug(' Starting server...')
     server = ServerStopAndWait(server_args.ADDR, server_args.PORT, server_args.DIRPATH)
+    server.start()
     

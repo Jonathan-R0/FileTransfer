@@ -40,10 +40,6 @@ class EndHandshakePackage:
     def __init__(self, data: bytes):
         self.ack, self.seq = struct.unpack('!II', data)
 
-    def pack_end_handshake_return(self) -> bytes:
-        """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
-        return struct.pack('!II', self.ack, self.seq)
-
 class NormalPackage:
 
     def __init__(self, ack: int, seq: int, end: bool, data: bytes):

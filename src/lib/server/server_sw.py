@@ -1,6 +1,7 @@
 from threading import Lock
 from server_client_download import ServerClientDownload
-from src.lib.common.package import NormalPackage, HandshakePackage, EndHandshakePackage, NormalPackage
+from server_client_upload import ServerClientUpload
+from src.lib.common.package import NormalPackage, HandshakePackage, EndHandshakePackage, InitialHandshakePackage
 from src.lib.common.socket_wrapper import SocketWrapper
 from src.lib.common.config import *
 import logging
@@ -23,14 +24,26 @@ class ServerStopAndWait:
             data, address = self.socket_wrapper.recvfrom(NORMAL_PACKAGE_SIZE)
             logging.debug(f' Received data from {address}: {data}')
 
-            if address not in clients:
-                clients.append(address) # TODO cambiar por una instancia de la clase cliente que corresponda, de ser necesario, de lo contrario borrarlas.
+            if address not in self.clients:
+                self.clients.append(address) # TODO cambiar por una instancia de la clase cliente que corresponda, de ser necesario, de lo contrario borrarlas.
                 incoming_package = InitialHandshakePackage(data)
                 first_ack_package = HandshakePackage(incoming_package)
                 self.socket_wrapper.sendto(address, first_ack_package.pack_handshake_return())
             else:
-                try:
-                    incoming_package = NormalPackage(data)
+                incoming_package = EndHandshakePackage(data)
+                #una vez que se recibe el ack y el seq en 0 no se hace nada mas
+                #si es upload vos le envias el ack y el seq en 0 y no haces nada mas
+                #si es download vos le envias el ack y el seq en 0 y le envias el paquete
+                #una vez que envias, esperas el ack y el seq en 1
+                #ese formato de paquete coincide con el endhandshakepackage, que tiene solo ack y seq (atr!!!)
+               
+                if first_ack_package.is_upload:
+                    #server client upload debe recibir los paquetitos y guardarlos en un archivo
+                    client = ServerClientUpload(address, incoming_package.file_name, incoming_package.file_size, incoming_package.seq, incoming_package.ack)
+                else:
+                    #server client download debe segmentar los paquetitos y segun el ack y el seq enviarlos
+                    client = ServerClientDownload(address, incoming_package.file_name, incoming_package.file_size, incoming_package.seq, incoming_package.ack)
+
                 
 
     def return_handshake_package(self, package: HandshakePackage, address: str) -> None:

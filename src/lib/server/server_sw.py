@@ -1,7 +1,7 @@
 from threading import Lock
 from server_client_download import ServerClientDownload
 from server_client_upload import ServerClientUpload
-from src.lib.common.package import NormalPackage, HandshakePackage, EndHandshakePackage, InitialHandshakePackage
+from src.lib.common.package import NormalPackage, HandshakePackage, AckSeqPackage, InitialHandshakePackage
 from src.lib.common.socket_wrapper import SocketWrapper
 from src.lib.common.config import *
 import logging
@@ -30,22 +30,21 @@ class ServerStopAndWait:
                 first_ack_package = HandshakePackage(incoming_package)
                 self.socket_wrapper.sendto(address, first_ack_package.pack_handshake_return())
             else:
-                incoming_package = EndHandshakePackage(data)
+                incoming_package = AckSeqPackage(data)
+                logging.debug(f' Received ack: {incoming_package.ack} and seq: {incoming_package.seq} from {address}')
                 #una vez que se recibe el ack y el seq en 0 no se hace nada mas
                 #si es upload vos le envias el ack y el seq en 0 y no haces nada mas
                 #si es download vos le envias el ack y el seq en 0 y le envias el paquete
                 #una vez que envias, esperas el ack y el seq en 1
                 #ese formato de paquete coincide con el endhandshakepackage, que tiene solo ack y seq (atr!!!)
                
-                if first_ack_package.is_upload:
+                '''if first_ack_package.is_upload:
                     #server client upload debe recibir los paquetitos y guardarlos en un archivo
                     client = ServerClientUpload(address, incoming_package.file_name, incoming_package.file_size, incoming_package.seq, incoming_package.ack)
                 else:
                     #server client download debe segmentar los paquetitos y segun el ack y el seq enviarlos
-                    client = ServerClientDownload(address, incoming_package.file_name, incoming_package.file_size, incoming_package.seq, incoming_package.ack)
-
+                    client = ServerClientDownload(address, incoming_package.file_name, incoming_package.file_size, incoming_package.seq, incoming_package.ack)'''
                 
-
     def return_handshake_package(self, package: HandshakePackage, address: str) -> None:
         package = package.pack_handshake_return()
         self.socket_wrapper.sendto(package, address)

@@ -15,7 +15,7 @@ class SocketWrapper:
         """Envia un mensaje a la direccion especificada."""
         if isinstance(data, str):
             data = data.encode()
-        self.socket.sendto(data, address)
+        self.socket.sendto(data=data, address=address)
 
     # El tamaño del mensaje deberia ser diferente segun el protocolo de envio?
     def recvfrom(self, buffer_size: int) -> tuple[str, ...]:

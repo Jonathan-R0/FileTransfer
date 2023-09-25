@@ -31,7 +31,11 @@ class HandshakePackage:
         """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
         return struct.pack('!?I255sII', self.is_upload, self.file_size, self.file_name.encode(), 0, 0)
 
-class EndHandshakePackage:
+    @staticmethod
+    def unpack_handshake_return(self, data: bytes):
+        self.is_upload, self.file_size, self.file_name, self.ack, self.seq = struct.unpack('!?I255sII', data)
+
+class AckSeqPackage:
 
     def __init__(self, ack: int, seq: int):
         self.ack = ack

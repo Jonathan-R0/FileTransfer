@@ -11,7 +11,7 @@ class SocketWrapper:
         """El bind conecta el socket a un host y un puerto."""
         self.socket.bind((host, port))
 
-    def sendto(self, data: str | bytes, address: str) -> None:
+    def sendto(self, address: str, data: str | bytes) -> None:
         """Envia un mensaje a la direccion especificada."""
         if isinstance(data, str):
             data = data.encode()

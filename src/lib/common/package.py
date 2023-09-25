@@ -8,6 +8,9 @@ class InitialHandshakePackage:
         self.file_size = file_size
         self.file_name = file_name
 
+    def __init__(self, data: bytes):
+        self.is_upload, self.file_size, self.file_name = struct.unpack('!?I255s', data)
+
     def pack_initial_handshake_return(self) -> bytes:
         """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
         return struct.pack(f'!?I{len(self.file_name)}sII', self.is_upload, self.file_size, self.file_name.encode())
@@ -19,9 +22,14 @@ class HandshakePackage:
         self.file_size = file_size
         self.file_name = file_name
 
+    def __init__(self, data: InitialHandshakePackage):
+        self.is_upload = data.is_upload
+        self.file_size = data.file_size
+        self.file_name = data.file_name
+
     def pack_handshake_return(self) -> bytes:
         """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
-        return struct.pack(f'!?I{len(self.file_name)}sII', self.is_upload, self.file_size, self.file_name.encode(), 0, 0)
+        return struct.pack('!?I255sII', self.is_upload, self.file_size, self.file_name.encode(), 0, 0)
 
 class EndHandshakePackage:
 
@@ -29,18 +37,23 @@ class EndHandshakePackage:
         self.ack = ack
         self.seq = seq
 
+    def __init__(self, data: bytes):
+        self.ack, self.seq = struct.unpack('!II', data)
+
     def pack_end_handshake_return(self) -> bytes:
         """Returns the handshake package to be sent to the client, also adds the seq number and ack as a zero"""
-        return struct.pack(f'!II', self.ack, self.seq)
+        return struct.pack('!II', self.ack, self.seq)
 
 class NormalPackage:
 
-    def __init__(self, ack: int, seq: int, size: int, end: bool, data: bytes):
+    def __init__(self, ack: int, seq: int, end: bool, data: bytes):
         self.ack = ack
         self.seq = seq
-        self.size = size
         self.end = end
         self.data = data
+
+    def __init__(self, data: bytes):
+        self.ack, self.seq, self.end, self.data = struct.unpack('!II?251s', data)
 
     def pack_normal_package_return(self) -> bytes:
         """Returns the normal package to be sent to the client. Adds +1 to the seq number"""

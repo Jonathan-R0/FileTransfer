@@ -1,6 +1,6 @@
 from threading import Lock
 from server_client_download import ServerClientDownload
-from src.lib.common.package import NormalPackage, HandshakePackage
+from src.lib.common.package import NormalPackage, HandshakePackage, EndHandshakePackage, NormalPackage
 from src.lib.common.socket_wrapper import SocketWrapper
 from src.lib.common.config import *
 import logging
@@ -12,7 +12,7 @@ class ServerStopAndWait:
         self.port = port
         self.dirpath = dirpath
         self.clients = []
-        self.clients_lock = Lock()
+        self.clients_lock = Lock() # TODO ojo con los try/catch en los locks que podemos dejar un deadlock si no tenemos un release en el finally
         self.socket_wrapper = SocketWrapper()
         self.socket_wrapper.bind(self.host, self.port)
 
@@ -24,28 +24,18 @@ class ServerStopAndWait:
             logging.debug(f' Received data from {address}: {data}')
 
             if address not in clients:
-                clients_lock.acquire()
                 clients.append(address) # TODO cambiar por una instancia de la clase cliente que corresponda, de ser necesario, de lo contrario borrarlas.
-                clients_lock.release()
-                incoming_package = PackageParser.parse_initial_message(data)
+                incoming_package = InitialHandshakePackage(data)
+                first_ack_package = HandshakePackage(incoming_package)
+                self.socket_wrapper.sendto(address, first_ack_package.pack_handshake_return())
             else:
-                pass
-
-    def process_handshake_package(self, package: HandshakePackage) -> None:
-        pass
-        if package.is_upload:  # WARNING NO EXISTE ESTE ATRIBUTO
-            # procesar paquetito
-            pass
+                try:
+                    incoming_package = NormalPackage(data)
+                
 
     def return_handshake_package(self, package: HandshakePackage, address: str) -> None:
         package = package.pack_handshake_return()
         self.socket_wrapper.sendto(package, address)
-
-    def process_package(self, package: NormalPackage) -> None:
-        pass
-        if package.is_upload:  # WARNING NO EXISTE ESTE ATRIBUTO
-            # procesar paquetito
-            pass
 
     def return_normal_package(self, package: NormalPackage, address: str) -> None:
         package = package.pack_normal_package_return()

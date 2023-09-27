@@ -18,9 +18,10 @@ class ServerClient(threading.Thread):
 
     def create_socket_and_reply_handshake(self) -> None:
         self.socket = SocketWrapper()
-        self.socket.bind(self.address[0], self.address[1])
+        self.socket.bind("", 0)
         logging.debug(f' Replying to handshake from: {self.address}')
         self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
 
     def end(self) -> None:
         self.socket.close()
+        logging.debug(f' Client {self.address} ended')

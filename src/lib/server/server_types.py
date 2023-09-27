@@ -3,6 +3,10 @@ from lib.server.server_sr import ServerSelectiveRepeat
 from enum import Enum
 
 
+class ServerTypeNotFound(Exception):
+    pass
+
+
 class ServerTypes(Enum):
 
     STOPANDWAIT = 1
@@ -10,6 +14,9 @@ class ServerTypes(Enum):
 
     class ServerTypeNotFound(Exception):
         pass
+
+    def is_saw(self) -> bool:
+        return self == ServerTypes.STOPANDWAIT
 
     def create_server(self, args):
         match self:

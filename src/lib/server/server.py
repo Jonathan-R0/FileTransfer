@@ -1,13 +1,12 @@
 import logging
 from threading import Lock
-from typing import Tuple
 
-from src.lib.common.config import NORMAL_PACKAGE_SIZE
-from src.lib.common.package import InitialHandshakePackage
-from src.lib.common.socket_wrapper import SocketWrapper
-from src.lib.server.server_client import ServerClient
-from src.lib.server.server_client_download import ServerClientDownload
-from src.lib.server.server_client_upload import ServerClientUpload
+from lib.common.config import NORMAL_PACKAGE_SIZE
+from lib.common.package import InitialHandshakePackage
+from lib.common.socket_wrapper import SocketWrapper
+from lib.server.server_client import ServerClient
+from lib.server.server_client_download import ServerClientDownload
+from lib.server.server_client_upload import ServerClientUpload
 
 
 class Server:
@@ -30,12 +29,13 @@ class Server:
                              else ServerClientDownload(initial_package, address, self.dirpath))
             self.clients_lock.release()
 
-    def listen_to_new_connections(self) -> Tuple[bytes, ...]:
+    def listen_to_new_connections(self) -> tuple[bytes, ...]:
         return self.socket_wrapper.recvfrom(NORMAL_PACKAGE_SIZE)
 
     def push_client(self, client: ServerClient) -> None:
         if client.address not in self.clients:
             self.clients.append(client)
+            logging.debug(f' New client: {client.address}')
             client.start()
 
     def end(self) -> None:

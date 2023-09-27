@@ -1,4 +1,4 @@
-from src.lib.client.common_args import create_common_args
+from lib.client.common_args import create_common_args
 
 parser = create_common_args('upload', 'Send a file to a remote host')
 parser.add_argument('-s', '--src', dest='FILEPATH', default='.', help='source file path')

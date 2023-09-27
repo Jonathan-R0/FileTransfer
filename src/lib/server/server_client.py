@@ -1,7 +1,8 @@
+import logging
 import threading
 
-from src.lib.common.package import InitialHandshakePackage
-from src.lib.common.socket_wrapper import SocketWrapper
+from lib.common.package import InitialHandshakePackage, AckSeqPackage
+from lib.common.socket_wrapper import SocketWrapper
 
 
 class ServerClient(threading.Thread):
@@ -15,9 +16,11 @@ class ServerClient(threading.Thread):
         self.address = address
         self.socket = None
 
-    def create_socket(self) -> None:
+    def create_socket_and_reply_handshake(self) -> None:
         self.socket = SocketWrapper()
         self.socket.bind(self.address[0], self.address[1])
+        logging.debug(f' Replying to handshake from: {self.address}')
+        self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
 
     def end(self) -> None:
         self.socket.close()

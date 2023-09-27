@@ -1,5 +1,5 @@
 import socket
-from typing import Tuple
+from typing import Any
 
 
 class SocketWrapper:
@@ -12,19 +12,19 @@ class SocketWrapper:
         """El bind conecta el socket a un host y un puerto."""
         self.socket.bind((host, port))
 
-    def sendto(self, address: str, data: str) -> None:
+    def sendto(self, address: str | tuple[Any, ...], data: str | bytes) -> None:
         """Envia un mensaje a la direccion especificada."""
         if isinstance(data, str):
             data = data.encode()
         self.socket.sendto(data, address)
 
     # El tamaño del mensaje deberia ser diferente segun el protocolo de envio?
-    def recvfrom(self, buffer_size: int) -> Tuple[bytes, ...]:
+    def recvfrom(self, buffer_size: int) -> tuple[bytes, ...]:
         """Recibe un mensaje de un cliente."""
         data, address = self.socket.recvfrom(buffer_size)
         return data, address
 
-    def listen(self) -> Tuple[str, ...]:
+    def listen(self) -> tuple[str, ...] | tuple[bytes, bytes]:
         """Escucha a un cliente."""
         data, address = self.recvfrom(1024)
         return data, address

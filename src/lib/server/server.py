@@ -7,6 +7,7 @@ from src.lib.common.package import InitialHandshakePackage
 from src.lib.common.socket_wrapper import SocketWrapper
 from src.lib.server.server_client import ServerClient
 from src.lib.server.server_client_download import ServerClientDownload
+from src.lib.server.server_client_upload import ServerClientUpload
 
 
 class Server:
@@ -25,7 +26,7 @@ class Server:
             data, address = self.listen_to_new_connections()
             initial_package = InitialHandshakePackage(data)
             self.clients_lock.acquire()
-            self.push_client(ServerClientDownload(initial_package, address, self.dirpath) if initial_package.is_upload
+            self.push_client(ServerClientUpload(initial_package, address, self.dirpath) if initial_package.is_upload
                              else ServerClientDownload(initial_package, address, self.dirpath))
             self.clients_lock.release()
 

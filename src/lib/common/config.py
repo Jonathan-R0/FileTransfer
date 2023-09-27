@@ -1,7 +1,6 @@
-#from lib.server.server_types import ServerTypes
+from lib.server.server_types import ServerTypes
 
 MAX_FILE_SIZE = 1024 * 5  # 5MB
-#SERVER_TYPE = ServerTypes.STOPANDWAIT
 INITIAL_MESSAGE_SIZE = 260
 HANDSHAKE_PACKAGE_SIZE = 268
 END_HANDSHAKE_SIZE = 8

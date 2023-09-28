@@ -42,31 +42,43 @@ class Upload:
         file_size = os.path.getsize(self.file)
         bytes_sent = 0
         end = False
+        attempts = 0
         while not end and attempts < MAX_ATTEMPTS:
             try:
                 with open(self.file, 'rb') as file:
                     file.seek(bytes_sent)
                     data = file.read(256)
-                    bytes_sent += 256
                 if bytes_sent => file_size:
                     end = True
                 package = NormalPackage.pack_to_send(0, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto((self.host, self.port), package)
-                ack_receive = False
-                while not ack_receive and attempts < MAX_ATTEMPTS:
-                    try:
-                        self.socket_wrapper.settimeout(1.0)
-                        data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
-                        ack, seq = AckSeqPackage.unpack_from_server(data)
-                        ack_receive = True
-                        self.socket_wrapper.settimeout(None)
-                    except self.socket_wrapper.timeout:
-                        logging.debug(f' A timeout has occurred, resend package')
-                        self.socket_wrapper.sendto((self.host, self.port), package)
-                        attempts += 1
-                        continue
+                if not self.ack_receive(package):
+                    logging.debug(f' File upload failed: too many attempts')
+                    break
+                bytes_sent += 256
             except Exception as e:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
+                if attempts == MAX_ATTEMPTS:
+                    logging.debug(f' File upload failed: too many attempts')
                 continue
+    
+    def ack_receive(self, package: bytes) -> bool {
+        was_received = False
+        attempts = 0
+        while not was_received and attempts < MAX_ATTEMPTS:
+            try:
+                self.socket_wrapper.settimeout(1.0)
+                data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
+                ack, seq = AckSeqPackage.unpack_from_server(data)
+                if seq == sequence_number:
+                    ack_receive = True
+                    self.socket_wrapper.settimeout(None)
+            except self.socket_wrapper.timeout:
+                logging.debug(f' A timeout has occurred, resend package')
+                self.socket_wrapper.sendto((self.host, self.port), package)
+                attempts += 1
+                continue
+        return was_received
+    }
         

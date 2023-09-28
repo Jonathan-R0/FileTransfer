@@ -1,5 +1,6 @@
 import struct
 from typing import Any
+from lib.common.config import *
 
 
 class InitialHandshakePackage:

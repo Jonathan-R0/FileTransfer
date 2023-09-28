@@ -1,4 +1,4 @@
-from lib.common.config import ACK_SEQ_SIZE
+from lib.common.config import *
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.package import *
 from lib.client.config import *
@@ -34,6 +34,9 @@ class Upload:
             except Exception as e:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
+                if attempts == MAX_ATTEMPTS:
+                    logging.debug(f' File upload failed: too many attempts')
+                    return
                 continue
         self.stop_and_wait()
 

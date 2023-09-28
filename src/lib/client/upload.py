@@ -51,6 +51,7 @@ class Upload:
                     data = file.read(256)
                 if bytes_sent >= file_size:
                     end = True
+                logging.debug(f' Sending package number {sequence_number}')
                 package = NormalPackage.pack_to_send(0, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto((self.host, self.port), package)
                 if not self.ack_receive(package, sequence_number):
@@ -77,7 +78,7 @@ class Upload:
                 logging.debug(f' Ack: {ack}, Seq: {seq} from {server_address}')
                 if seq == sequence_number:
                     was_received = True
-                    logging.debug(f' Ack was received')
+                    logging.debug(f' Ack was received correctly')
                     self.socket_wrapper.settimeout(None)
             except self.socket_wrapper.timeout:
                 logging.debug(f' A timeout has occurred, resend package')

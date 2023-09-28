@@ -48,14 +48,15 @@ class Upload:
                 with open(self.file, 'rb') as file:
                     file.seek(bytes_sent)
                     data = file.read(256)
-                if bytes_sent => file_size:
+                if bytes_sent >= file_size:
                     end = True
                 package = NormalPackage.pack_to_send(0, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto((self.host, self.port), package)
-                if not self.ack_receive(package):
+                if not self.ack_receive(package, sequence_number):
                     logging.debug(f' File upload failed: too many attempts')
                     break
                 bytes_sent += 256
+                sequence_number += 1
             except Exception as e:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
@@ -63,7 +64,7 @@ class Upload:
                     logging.debug(f' File upload failed: too many attempts')
                 continue
     
-    def ack_receive(self, package: bytes) -> bool {
+    def ack_receive(self, package: bytes, sequence_number: int) -> bool:
         was_received = False
         attempts = 0
         while not was_received and attempts < MAX_ATTEMPTS:
@@ -80,5 +81,4 @@ class Upload:
                 attempts += 1
                 continue
         return was_received
-    }
         

@@ -1,5 +1,5 @@
-from src.lib.common.package import InitialHandshakePackage
-from src.lib.server.server_client import ServerClient
+from lib.common.package import InitialHandshakePackage
+from lib.server.server_client import ServerClient
 
 
 class ServerClientDownload(ServerClient):
@@ -7,5 +7,5 @@ class ServerClientDownload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def start(self) -> None:
-        self.create_socket()
+        self.create_socket_and_reply_handshake()
         pass

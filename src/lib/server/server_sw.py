@@ -1,12 +1,17 @@
 from threading import Lock
 from lib.server.server_client_download import ServerClientDownload
 from lib.server.server_client_upload import ServerClientUpload
-from lib.common.package import NormalPackage, HandshakePackage, AckSeqPackage, InitialHandshakePackage
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.config import *
 import logging
 
+class HandshakePackage:
+    pass
 
+class NormalPackage:
+    pass
+
+# TODO REHACER TODO ESTE ARCHIVO
 class ServerStopAndWait:
     def __init__(self, host: str, port: int, dirpath: str):
         self.host = host

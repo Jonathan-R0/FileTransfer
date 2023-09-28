@@ -31,6 +31,10 @@ class ServerClient(threading.Thread):
         logging.debug(f' Replying to handshake from: {self.address}')
         self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
 
+    def create_socket_with_no_reply(self) -> None:
+        self.socket = SocketWrapper()
+        self.socket.bind("", 0)
+
     def separate_file_into_chunks(self) -> list[bytes]:
         chunks = []
         while True:

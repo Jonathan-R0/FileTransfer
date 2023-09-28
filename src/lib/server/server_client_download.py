@@ -25,6 +25,8 @@ class ServerClientDownload(ServerClient):
             if end_flag == True:
                 break
 
+        # TODO: Implementar handleo de timeout
+
     def send_chunk_sw(self, seq: int, end_flag: bool) -> tuple[int, int]:
         self.socket.sendto(self.address, NormalPackage.pack_to_send(0, seq, self.separate_file_into_chunks()[seq], end_flag, 0))
         ackseq_data = self.socket.recvfrom(ACK_SEQ_SIZE)

@@ -48,7 +48,7 @@ class Upload:
             try:
                 with open(self.file, 'rb') as file:
                     file.seek(bytes_sent)
-                    data = file.read(256)
+                    data = file.read(DATA_SIZE)
                 if bytes_sent >= file_size:
                     end = True
                 logging.debug(f' Sending package number {sequence_number}')
@@ -57,7 +57,7 @@ class Upload:
                 if not self.ack_receive(package, sequence_number):
                     logging.debug(f' File upload failed: too many attempts')
                     break
-                bytes_sent += 256
+                bytes_sent += DATA_SIZE
                 sequence_number += 1
             except Exception as e:
                 logging.debug(f' Exception: {e}')

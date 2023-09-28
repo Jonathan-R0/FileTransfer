@@ -9,32 +9,32 @@ class InitialHandshakePackage:
 
     @staticmethod
     def unpack_from_client(data: bytes) -> tuple[Any, ...]:
-        return struct.unpack('!??I256s', data)
+        return struct.unpack(INITIAL_MESSAGE_FORMAT, data)
 
     @staticmethod
     def pack_to_send(is_upload: bool, is_saw: bool,  file_size: int, file_name: str | bytes) -> bytes:
         if isinstance(file_name, str):
             file_name = file_name.encode()
-        return struct.pack(f'!??I256s', is_upload, is_saw, file_size, file_name)
+        return struct.pack(INITIAL_MESSAGE_FORMAT, is_upload, is_saw, file_size, file_name)
 
 
 class AckSeqPackage:
 
     @staticmethod
     def unpack_from_server(data: bytes) -> tuple[Any, ...]:
-        return struct.unpack('!II', data)
+        return struct.unpack(ACK_SEQ_FORMAT, data)
 
     @staticmethod
     def pack_to_send(ack: int, seq: int) -> str:
-        return struct.pack('!II', ack, seq).decode()
+        return struct.pack(ACK_SEQ_FORMAT, ack, seq).decode()
 
 
 class NormalPackage:
 
         @staticmethod
         def unpack_from_client(data: bytes) -> tuple[Any, ...]:
-            return struct.unpack('!II?I256s', data)
+            return struct.unpack(NORMAL_PACKAGE_FORMAT, data)
 
         @staticmethod
         def pack_to_send(ack: int, seq: int, end: bool, error: int, data: bytes) -> bytes:
-            return struct.pack('!II?I256s', ack, seq, end, error, data)
+            return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error, data)

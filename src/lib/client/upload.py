@@ -43,6 +43,7 @@ class Upload:
         bytes_sent = 0
         end = False
         attempts = 0
+        logging.debug(f' Start to send file {self.file} to {self.host}:{self.port}')
         while not end and attempts < MAX_ATTEMPTS:
             try:
                 with open(self.file, 'rb') as file:
@@ -70,10 +71,13 @@ class Upload:
         while not was_received and attempts < MAX_ATTEMPTS:
             try:
                 self.socket_wrapper.settimeout(1.0)
+                logging.debug(f' Receiving ack, seq from {self.host}:{self.port}')
                 data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
                 ack, seq = AckSeqPackage.unpack_from_server(data)
+                logging.debug(f' Ack: {ack}, Seq: {seq} from {server_address}')
                 if seq == sequence_number:
                     was_received = True
+                    logging.debug(f' Ack was received')
                     self.socket_wrapper.settimeout(None)
             except self.socket_wrapper.timeout:
                 logging.debug(f' A timeout has occurred, resend package')

@@ -36,5 +36,5 @@ class NormalPackage:
             return struct.unpack('!II?I256s', data)
 
         @staticmethod
-        def pack_to_send(ack: int, seq: int, end: bool, error: int data: bytes) -> bytes:
+        def pack_to_send(ack: int, seq: int, end: bool, error: int, data: bytes) -> bytes:
             return struct.pack('!II?I256s', ack, seq, end, error, data)

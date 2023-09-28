@@ -14,7 +14,7 @@ class Upload:
         self.port = port
         self.file = os.path.join(file_path, file_name)
         self.socket_wrapper = SocketWrapper()
-        self.socket_wrapper.bind(self.host, 5050)
+        self.socket_wrapper.bind(self.host, port)
 
     def start(self) -> None:
         if not os.path.isfile(self.file):

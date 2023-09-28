@@ -4,9 +4,10 @@ from lib.common.package import *
 from lib.client.config import *
 import logging
 import os
+import time
 
 
-class UploadStopAndWait:
+class Upload:
 
     def __init__(self, host: str, port: int, file_path: str, file_name: str):
         self.host = host
@@ -34,3 +35,35 @@ class UploadStopAndWait:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
                 continue
+        self.stop_and_wait()
+
+    def stop_and_wait(self) -> None:
+        sequence_number = 0
+        file_size = os.path.getsize(self.file)
+        bytes_sent = 0
+        while bytes_sent < file_size:
+            try:
+                with open(self.file, 'rb') as file:
+                    file.seek(bytes_sent)
+                    data = file.read(256)
+                    bytes_sent += 256
+                package = DataPackage.pack_to_send(sequence_number, 0 ,0, data)
+                self.socket_wrapper.sendto((self.host, self.port), package)
+                ack_receive = False
+                while not ack_receive:
+                    try:
+                        self.socket_wrapper.settimeout(1.0)
+                        data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
+                        ack, seq = AckSeqPackage.unpack_from_server(data)
+                        ack_receive = True
+                        self.socket_wrapper.settimeout(None)
+                    except self.socket_wrapper.timeout:
+                        logging.debug(f' A timeout has occurred, resend package')
+                        self.socket_wrapper.sendto((self.host, self.port), package)
+                        attempts += 1
+                        continue
+            except Exception as e:
+                logging.debug(f' Exception: {e}')
+                attempts += 1
+                continue
+        

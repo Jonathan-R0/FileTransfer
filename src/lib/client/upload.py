@@ -41,16 +41,16 @@ class Upload:
         sequence_number = 0
         file_size = os.path.getsize(self.file)
         bytes_sent = 0
-        is_the_end = False
-        while not is_the_end and attempts < MAX_ATTEMPTS:
+        end = False
+        while not end and attempts < MAX_ATTEMPTS:
             try:
                 with open(self.file, 'rb') as file:
                     file.seek(bytes_sent)
                     data = file.read(256)
                     bytes_sent += 256
                 if bytes_sent => file_size:
-                    is_the_end = True
-                package = NormalPackage.pack_to_send(0, sequence_number, is_the_end, 0, data)
+                    end = True
+                package = NormalPackage.pack_to_send(0, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto((self.host, self.port), package)
                 ack_receive = False
                 while not ack_receive and attempts < MAX_ATTEMPTS:

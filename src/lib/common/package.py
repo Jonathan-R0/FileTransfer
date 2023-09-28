@@ -27,3 +27,14 @@ class AckSeqPackage:
     @staticmethod
     def pack_to_send(ack: int, seq: int) -> str:
         return struct.pack('!II', ack, seq).decode()
+
+
+class NormalPackage:
+
+        @staticmethod
+        def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+            return struct.unpack('!II?I256s', data)
+
+        @staticmethod
+        def pack_to_send(ack: int, seq: int, data: bytes) -> bytes:
+            return struct.pack('!II?I256s', ack, seq, end, error, data)

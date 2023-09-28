@@ -4,7 +4,7 @@
 |--------|---------------------------|
 | 104105 | Jonathan David Rosenblatt |
 | 104048 | Lautaro Francetich        |
-| 104077 | Nicolás Marín Podesta     |
+| 104077 | Nicolás Martín Podesta    |
 
 ## Ejecución de los Programas
 

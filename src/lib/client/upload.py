@@ -47,7 +47,7 @@ class Upload:
                     file.seek(bytes_sent)
                     data = file.read(256)
                     bytes_sent += 256
-                package = DataPackage.pack_to_send(sequence_number, 0 ,0, data)
+                package = NormalPackage.pack_to_send(0, sequence_number, False, 0, data)
                 self.socket_wrapper.sendto((self.host, self.port), package)
                 ack_receive = False
                 while not ack_receive:

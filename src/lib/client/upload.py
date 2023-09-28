@@ -73,7 +73,7 @@ class Upload:
                 data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
                 ack, seq = AckSeqPackage.unpack_from_server(data)
                 if seq == sequence_number:
-                    ack_receive = True
+                    was_received = True
                     self.socket_wrapper.settimeout(None)
             except self.socket_wrapper.timeout:
                 logging.debug(f' A timeout has occurred, resend package')

@@ -16,10 +16,14 @@ class ServerClientDownload(ServerClient):
         while end_flag == False:
             if len(self.separate_file_into_chunks()) == seq:
                 end_flag = True
-            self.socket.sendto(self.address, NormalPackage.pack_to_send(0, seq, self.separate_file_into_chunks()[seq], end_flag, 0))
-            ackseq_data = self.socket.recvfrom(ACK_SEQ_SIZE)
-            ack_recieved, seq_recieved = AckSeqPackage.unpack_from_client(ackseq_data)
-            if seq_recieved == seq and ack_recieved == 1:
-                seq += 1
-                # TODO handle seq not being the same (packet loss)
+            ack_recieved, seq_recieved = self.send_chunk_sw(self, seq, end_flag)
+            while seq_recieved != seq:
+                ack_recieved, seq_recieved = self.send_chunk_sw(self, seq, end_flag)
+                if seq_recieved == seq:
+                    break
+            seq += 1
+            if end_flag == True:
+                break
+
+
 

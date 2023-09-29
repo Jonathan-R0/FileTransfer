@@ -24,8 +24,9 @@ class AckSeqPackage:
     def unpack_from_server(data: bytes) -> tuple[Any, ...]:
         return struct.unpack('!II', data)
 
-    def unpack_from_client(self, data: bytes) -> tuple[Any, ...]:
-        return self.unpack_from_server(data)
+    @staticmethod
+    def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+        return AckSeqPackage.unpack_from_server(data)
 
     @staticmethod
     def pack_to_send(ack: int, seq: int) -> str:
@@ -35,7 +36,9 @@ class AckSeqPackage:
 class NormalPackage:
 
     @staticmethod
-
     def pack_to_send(ack: int, seq: int, data: bytes, end: bool, error: int) -> bytes:
-
         return struct.pack('!II?I256s', ack, seq, end, error, data)
+
+    @staticmethod
+    def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+        return struct.unpack('!II?I256s', data)

@@ -70,8 +70,6 @@ class Upload:
 
     def stop_and_wait(self) -> None:
         sequence_number = 0
-        file_size = os.path.getsize(self.file)
-        bytes_sent = 0
         end = False
         attempts = 0
         logging.debug(f' Start to send file {self.file} to {self.server_address[0]}:{self.server_address[1]}')

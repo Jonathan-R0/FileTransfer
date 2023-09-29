@@ -44,9 +44,9 @@ class Upload:
     def ack_receive(self, package: bytes, sequence_number: int) -> bool:
         was_received = False
         attempts = 0
+        self.socket_wrapper.socket.settimeout(1.0)
         while not was_received and attempts < MAX_ATTEMPTS:
             try:
-                self.socket_wrapper.socket.settimeout(1.0) # Quizas se puede disminuir
                 logging.debug(f' Receiving ack, seq from {self.server_address[0]}:{self.server_address[1]}')
                 data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
                 if (server_address != self.server_address):

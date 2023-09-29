@@ -69,7 +69,7 @@ class Upload:
         return was_received
 
     def stop_and_wait(self) -> None:
-        sequence_number = 0
+        sequence_number = 1
         end = False
         attempts = 0
         logging.debug(f' Start to send file {self.file} to {self.server_address[0]}:{self.server_address[1]}')
@@ -80,7 +80,7 @@ class Upload:
                     logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
                 if len(chunk) == 0:
                     break
-                package = NormalPackage.pack_to_send(0, sequence_number, end, 0, data)
+                package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, sequence_number):
                     logging.debug(f' File upload failed: too many attempts')

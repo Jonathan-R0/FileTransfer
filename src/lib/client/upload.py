@@ -39,8 +39,6 @@ class Upload:
             except Exception as e:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
-                if attempts == MAX_ATTEMPTS:
-                    return
                 continue
     
     def ack_receive(self, package: bytes, sequence_number: int) -> bool:
@@ -58,12 +56,16 @@ class Upload:
                 if seq == sequence_number:
                     was_received = True
                     logging.debug(f' Ack was received correctly')
-                    self.socket_wrapper.socket.settimeout(None)
             except TimeoutError:
                 logging.debug(f' A timeout has occurred, resend package')
                 self.socket_wrapper.sendto(self.server_address, package)
                 attempts += 1
                 continue
+            except Exception as e:
+                logging.debug(f' Exception: {e}')
+                attempts += 1
+                continue
+        self.socket_wrapper.socket.settimeout(None)
         return was_received
 
     def stop_and_wait(self) -> None:

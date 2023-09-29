@@ -23,6 +23,7 @@ class Server:
         logging.debug(' Listening...')
         while True:
             data, address = self.listen_to_new_connections()
+            logging.debug(' ...')
             initial_package = InitialHandshakePackage(data)
             self.clients_lock.acquire()
             self.push_client(ServerClientUpload(initial_package, address, self.dirpath) if initial_package.is_upload

@@ -23,7 +23,7 @@ if __name__ == '__main__':
     end = False
     ack = 0
     seq = 1
-    
+    address = addr #aca cambie el address por el que tiene el server que le responde (socket?)
     while not end:
         chunk, end = file_handler.read_next_chunk(seq)
         if end or len(chunk) == 0:

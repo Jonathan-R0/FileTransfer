@@ -29,20 +29,19 @@ class Upload:
     def complete_handshake(self) -> None:    
         attempts = 0
         while attempts < MAX_ATTEMPTS:
-            #try:
+            try:
                 logging.debug(f' Performing hanshake to {self.server_address[0]}:{self.server_address[1]} with file {self.file}')
                 package = InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(), 
                                                                     os.path.getsize(self.file), self.file)
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, 0):
                     break
-            
-            #except Exception as e:
-            #    logging.debug(f' Exception: {e}')
-            #    attempts += 1
-            #    if attempts == MAX_ATTEMPTS:
-            #        return
-            #    continue
+            except Exception as e:
+                logging.debug(f' Exception: {e}')
+                attempts += 1
+                if attempts == MAX_ATTEMPTS:
+                    return
+                continue
     
     def ack_receive(self, package: bytes, sequence_number: int) -> bool:
         was_received = False
@@ -60,13 +59,8 @@ class Upload:
                     was_received = True
                     logging.debug(f' Ack was received correctly')
                     self.socket_wrapper.socket.settimeout(None)
-            except self.socket_wrapper.socket.timeout:
+            except TimeoutError:
                 logging.debug(f' A timeout has occurred, resend package')
-                self.socket_wrapper.sendto(self.server_address, package)
-                attempts += 1
-                continue
-            except self.socket_wrapper.socket.error as e:
-                logging.debug(f' Exception: {e}')
                 self.socket_wrapper.sendto(self.server_address, package)
                 attempts += 1
                 continue
@@ -80,7 +74,7 @@ class Upload:
         attempts = 0
         logging.debug(f' Start to send file {self.file} to {self.server_address[0]}:{self.server_address[1]}')
         while not end and attempts < MAX_ATTEMPTS:
-            #try:
+            try:
                 chunk, end = file_handler.read_next_chunk(seq)
                 if end or len(chunk) == 0:
                     logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
@@ -93,10 +87,10 @@ class Upload:
                     break
                 bytes_sent += DATA_SIZE
                 sequence_number += 1
-            #except Exception as e:
-            #    logging.debug(f' Exception: {e}')
-            #    attempts += 1
-            #    if attempts == MAX_ATTEMPTS:
-            #        logging.debug(f' File upload failed: too many attempts')
-            #    continue
+            except Exception as e:
+                logging.debug(f' Exception: {e}')
+                attempts += 1
+                if attempts == MAX_ATTEMPTS:
+                    logging.debug(f' File upload failed: too many attempts')
+                continue
         

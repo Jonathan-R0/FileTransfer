@@ -15,7 +15,7 @@ class FileHandler:
         return chunk, len(chunk) < self.chunk_size
 
     def append_chunk(self, chunk: bytes) -> None:
-        self.file.append(chunk)
+        self.file.write(chunk)
 
     def close(self):
         self.file.close()

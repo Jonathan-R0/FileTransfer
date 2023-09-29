@@ -26,16 +26,21 @@ class AckSeqPackage:
         return struct.unpack(ACK_SEQ_FORMAT, data)
 
     @staticmethod
+    def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+        return AckSeqPackage.unpack_from_server(data)
+
+    @staticmethod
     def pack_to_send(ack: int, seq: int) -> str:
         return struct.pack(ACK_SEQ_FORMAT, ack, seq).decode()
 
 
+
 class NormalPackage:
 
-        @staticmethod
-        def unpack_from_client(data: bytes) -> tuple[Any, ...]:
-            return struct.unpack(NORMAL_PACKAGE_FORMAT, data)
+    @staticmethod
+    def pack_to_send(ack: int, seq: int, data: bytes, end: bool, error: int) -> bytes:
+        return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error, data)
 
-        @staticmethod
-        def pack_to_send(ack: int, seq: int, end: bool, error: int, data: bytes) -> bytes:
-            return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error, data)
+    @staticmethod
+    def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+        return struct.unpack(NORMAL_PACKAGE_FORMAT, data)

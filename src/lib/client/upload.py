@@ -10,7 +10,7 @@ import time
 
 class Upload:
 
-    def __init__(self, server_address: (str,str), file_path: str, file_name: str):
+    def __init__(self, server_address: tuple[str,str], file_path: str, file_name: str):
         self.server_address = server_address
         self.file = os.path.join(file_path, file_name)
         self.socket_wrapper = SocketWrapper()
@@ -22,7 +22,7 @@ class Upload:
             logging.debug(f'The file {self.file} does not exist.')
             return
         if not self.complete_handshake():
-            logging.debug(f' Handshake failed')
+            logging.debug(' Handshake failed')
             return
         self.stop_and_wait()
 
@@ -55,9 +55,9 @@ class Upload:
                 logging.debug(f' Ack: {ack}, Seq: {seq} from {self.server_address}')
                 if seq == sequence_number:
                     was_received = True
-                    logging.debug(f' Ack was received correctly')
+                    logging.debug(' Ack was received correctly')
             except TimeoutError:
-                logging.debug(f' A timeout has occurred, resend package')
+                logging.debug(' A timeout has occurred, resend package')
                 self.socket_wrapper.sendto(self.server_address, package)
                 attempts += 1
                 continue
@@ -83,7 +83,7 @@ class Upload:
                 package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, data)
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, sequence_number):
-                    logging.debug(f' File upload failed: too many attempts')
+                    logging.debug(' File upload failed: too many attempts')
                     break
                 bytes_sent += DATA_SIZE
                 sequence_number += 1
@@ -91,6 +91,6 @@ class Upload:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
                 if attempts == MAX_ATTEMPTS:
-                    logging.debug(f' File upload failed: too many attempts')
+                    logging.debug(' File upload failed: too many attempts')
                 continue
         

@@ -1,4 +1,3 @@
-from lib.server.server_sw import ServerStopAndWait
 from lib.server.server_sr import ServerSelectiveRepeat
 from enum import Enum
 

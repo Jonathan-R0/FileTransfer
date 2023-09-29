@@ -6,6 +6,9 @@ from lib.common.config import *
 from lib.common.file_handler import FileHandler
 import os
 
+if uploader_args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+
 if __name__ == '__main__':
     print(downloader_args)
 

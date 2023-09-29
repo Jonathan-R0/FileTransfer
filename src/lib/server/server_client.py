@@ -24,6 +24,7 @@ class ServerClient(threading.Thread):
             self.return_error_to_client(500) # TODO cambiar los errores para que no matcheen los codigos de error http...
         except ValueError as e:
             self.return_error_to_client(404) # ... mas que nada para evitar quejas por implementar algo de una capa superior.
+        # TODO contemplar tambien los nombres de archivos repetidos.
 
     def return_error_to_client(self, error: int) -> None:
         self.socket.sendto(self.address, NormalPackage.pack_to_send(0, 0, b'', True, error))

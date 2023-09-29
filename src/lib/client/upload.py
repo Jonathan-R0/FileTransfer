@@ -28,26 +28,27 @@ class Upload:
     def complete_handshake(self) -> None:    
         attempts = 0
         while attempts < MAX_ATTEMPTS:
-            try:
+            #try:
                 logging.debug(f' Performing hanshake to {self.host}:{self.port} with file {self.file}')
                 package = InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(), 
                                                                     os.path.getsize(self.file), self.file)
                 self.socket_wrapper.sendto((self.host, self.port), package)
                 if not self.ack_receive(package, 0):
                     break
-            except Exception as e:
-                logging.debug(f' Exception: {e}')
-                attempts += 1
-                if attempts == MAX_ATTEMPTS:
-                    return
-                continue
+            
+            #except Exception as e:
+            #    logging.debug(f' Exception: {e}')
+            #    attempts += 1
+            #    if attempts == MAX_ATTEMPTS:
+            #        return
+            #    continue
     
     def ack_receive(self, package: bytes, sequence_number: int) -> bool:
         was_received = False
         attempts = 0
         while not was_received and attempts < MAX_ATTEMPTS:
             try:
-                self.socket_wrapper.settimeout(1.0)
+                self.socket_wrapper..socket.settimeout(1.0)
                 logging.debug(f' Receiving ack, seq from {self.host}:{self.port}')
                 data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
                 ack, seq = AckSeqPackage.unpack_from_server(data)
@@ -55,9 +56,14 @@ class Upload:
                 if seq == sequence_number:
                     was_received = True
                     logging.debug(f' Ack was received correctly')
-                    self.socket_wrapper.settimeout(None)
-            except self.socket_wrapper.timeout:
+                    self.socket_wrapper.socket.settimeout(None)
+            except self.socket_wrapper.socket.timeout:
                 logging.debug(f' A timeout has occurred, resend package')
+                self.socket_wrapper.sendto((self.host, self.port), package)
+                attempts += 1
+                continue
+            except self.socket_wrapper.socket.error as e:
+                logging.debug(f' Exception: {e}')
                 self.socket_wrapper.sendto((self.host, self.port), package)
                 attempts += 1
                 continue
@@ -71,7 +77,7 @@ class Upload:
         attempts = 0
         logging.debug(f' Start to send file {self.file} to {self.host}:{self.port}')
         while not end and attempts < MAX_ATTEMPTS:
-            try:
+            #try:
                 with open(self.file, 'rb') as file:
                     file.seek(bytes_sent)
                     data = file.read(DATA_SIZE)
@@ -85,10 +91,10 @@ class Upload:
                     break
                 bytes_sent += DATA_SIZE
                 sequence_number += 1
-            except Exception as e:
-                logging.debug(f' Exception: {e}')
-                attempts += 1
-                if attempts == MAX_ATTEMPTS:
-                    logging.debug(f' File upload failed: too many attempts')
-                continue
+            #except Exception as e:
+            #    logging.debug(f' Exception: {e}')
+            #    attempts += 1
+            #    if attempts == MAX_ATTEMPTS:
+            #        logging.debug(f' File upload failed: too many attempts')
+            #    continue
         

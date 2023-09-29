@@ -5,6 +5,7 @@ import os
 from lib.common.package import InitialHandshakePackage, AckSeqPackage, NormalPackage
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.config import *
+from lib.common.file_handler import FileHandler
 
 
 class ServerClient(threading.Thread):
@@ -15,12 +16,14 @@ class ServerClient(threading.Thread):
         self.address = address
         self.socket = None
         try:
-            path = os.path.join(dirpath, initial_package.file_name.decode().rstrip("\0"))
-            self.file = open(file=path, mode='rb')
+            path = os.path.join(dirpath, initial_package.file_name\
+                                                        .decode()\
+                                                        .rstrip("\0"))
+            self.file = FileHandler(open(file=path, mode='rb'))
         except OSError as e:
-            self.return_error_to_client(500)
+            self.return_error_to_client(500) # TODO cambiar los errores para que no matcheen los codigos de error http...
         except ValueError as e:
-            self.return_error_to_client(404)
+            self.return_error_to_client(404) # ... mas que nada para evitar quejas por implementar algo de una capa superior.
 
     def return_error_to_client(self, error: int) -> None:
         self.socket.sendto(self.address, NormalPackage.pack_to_send(0, 0, b'', True, error))

@@ -15,7 +15,7 @@ class ServerClientDownload(ServerClient):
         self.create_socket_and_reply_handshake()
         
         while not end:
-            chunk, end = self.read_next_chunk(seq)
+            chunk, end = self.file.read_next_chunk(seq)
             if end or len(chunk) == 0:
                 logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
             if len(chunk) == 0:
@@ -30,10 +30,4 @@ class ServerClientDownload(ServerClient):
             else:
                 pass # TODO handle late or lost package
         self.end()
-
-    def read_next_chunk(self, seq: int) -> tuple[bytes, bool]:
-        self.file.seek((seq - 1) * DATA_SIZE)
-        chunk = self.file.read(DATA_SIZE)
-        logging.debug(f' Read chunk {chunk} with size: {len(chunk)}')
-        return chunk, len(chunk) < DATA_SIZE
         

@@ -7,6 +7,9 @@ from lib.common.config import *
 import logging
 import os
 
+if uploader_args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+
 if __name__ == '__main__':
 
     logging.debug(' Starting upload...')

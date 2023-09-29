@@ -31,7 +31,7 @@ class Upload:
         while attempts < MAX_ATTEMPTS:
             try:
                 logging.debug(f' Performing hanshake to {self.server_address[0]}:{self.server_address[1]} with file {self.file}')
-                package = InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(), 
+                package = InitialHandshakePackage.pack_to_send(True, True, 
                                                                     self.file_handler.size(), self.file) # es el path o solo el nombre del file?
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, 0):

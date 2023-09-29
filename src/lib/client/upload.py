@@ -20,25 +20,48 @@ class Upload:
         if not os.path.isfile(self.file):
             logging.debug(f'The file {self.file} does not exist.')
             return
+        if not self.complete_handshake():
+            logging.debug(f' Handshake failed')
+            return
+        self.stop_and_wait()
+
+    def complete_handshake(self) -> None:    
         attempts = 0
         while attempts < MAX_ATTEMPTS:
             try:
                 logging.debug(f' Performing hanshake to {self.host}:{self.port} with file {self.file}')
-                self.socket_wrapper.sendto((self.host, self.port),
-                                           InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(),
-                                                                                os.path.getsize(self.file), self.file))
-                logging.debug(f' Receiving ack, seq from {self.host}:{self.port}')
-                data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
-                ack, seq = AckSeqPackage.unpack_from_server(data)
-                logging.debug(f' Ack: {ack}, Seq: {seq} from {server_address}')
+                package = InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(), 
+                                                                    os.path.getsize(self.file), self.file)
+                self.socket_wrapper.sendto((self.host, self.port), package)
+                if not self.ack_receive(package, 0):
+                    break
             except Exception as e:
                 logging.debug(f' Exception: {e}')
                 attempts += 1
                 if attempts == MAX_ATTEMPTS:
-                    logging.debug(f' File upload failed: too many attempts')
                     return
                 continue
-        self.stop_and_wait()
+    
+    def ack_receive(self, package: bytes, sequence_number: int) -> bool:
+        was_received = False
+        attempts = 0
+        while not was_received and attempts < MAX_ATTEMPTS:
+            try:
+                self.socket_wrapper.settimeout(1.0)
+                logging.debug(f' Receiving ack, seq from {self.host}:{self.port}')
+                data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
+                ack, seq = AckSeqPackage.unpack_from_server(data)
+                logging.debug(f' Ack: {ack}, Seq: {seq} from {server_address}')
+                if seq == sequence_number:
+                    was_received = True
+                    logging.debug(f' Ack was received correctly')
+                    self.socket_wrapper.settimeout(None)
+            except self.socket_wrapper.timeout:
+                logging.debug(f' A timeout has occurred, resend package')
+                self.socket_wrapper.sendto((self.host, self.port), package)
+                attempts += 1
+                continue
+        return was_received
 
     def stop_and_wait(self) -> None:
         sequence_number = 0
@@ -68,25 +91,4 @@ class Upload:
                 if attempts == MAX_ATTEMPTS:
                     logging.debug(f' File upload failed: too many attempts')
                 continue
-    
-    def ack_receive(self, package: bytes, sequence_number: int) -> bool:
-        was_received = False
-        attempts = 0
-        while not was_received and attempts < MAX_ATTEMPTS:
-            try:
-                self.socket_wrapper.settimeout(1.0)
-                logging.debug(f' Receiving ack, seq from {self.host}:{self.port}')
-                data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
-                ack, seq = AckSeqPackage.unpack_from_server(data)
-                logging.debug(f' Ack: {ack}, Seq: {seq} from {server_address}')
-                if seq == sequence_number:
-                    was_received = True
-                    logging.debug(f' Ack was received correctly')
-                    self.socket_wrapper.settimeout(None)
-            except self.socket_wrapper.timeout:
-                logging.debug(f' A timeout has occurred, resend package')
-                self.socket_wrapper.sendto((self.host, self.port), package)
-                attempts += 1
-                continue
-        return was_received
         

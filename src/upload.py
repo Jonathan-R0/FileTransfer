@@ -1,3 +1,4 @@
+from lib.client.upload import Upload
 from lib.client.upload_args import uploader_args
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.package import *
@@ -7,8 +8,13 @@ import logging
 import os
 
 if __name__ == '__main__':
+
+    logging.debug(' Starting upload...')
+    upload = Upload((uploader_args.ADDR, uploader_args.PORT), uploader_args.FILEPATH, uploader_args.FILENAME)
+    upload.start()
+
     # File System Configuration
-    path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
+    '''path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
     file_handler = FileHandler(open(file=path, mode='rb'))
 
     # Network Configuration
@@ -41,5 +47,5 @@ if __name__ == '__main__':
             pass # TODO handle late or lost package
     socket.close()
     file_handler.close()
-    logging.debug(f' Client {address} ended')
-        
+    logging.debug(f' Client {address} ended')'''
+    

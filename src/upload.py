@@ -7,5 +7,5 @@ if uploader_args.verbose:
 
 if __name__ == '__main__':
     logging.debug(' Starting upload...')
-    upload = Upload(uploader_args.ADDR, uploader_args.PORT, uploader_args.FILEPATH, uploader_args.FILENAME)
+    upload = Upload((uploader_args.ADDR, uploader_args.PORT), uploader_args.FILEPATH, uploader_args.FILENAME)
     upload.start()

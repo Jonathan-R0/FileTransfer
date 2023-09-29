@@ -32,7 +32,7 @@ class Upload:
             try:
                 logging.debug(f' Performing hanshake to {self.server_address[0]}:{self.server_address[1]} with file {self.file}')
                 package = InitialHandshakePackage.pack_to_send(True, rdt_protocol.is_saw(), 
-                                                                    file_handler.size(), self.file) # es el path o solo el nombre del file?
+                                                                    self.file_handler.size(), self.file) # es el path o solo el nombre del file?
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, 0):
                     break
@@ -48,7 +48,7 @@ class Upload:
         attempts = 0
         while not was_received and attempts < MAX_ATTEMPTS:
             try:
-                self.socket_wrapper.socket.settimeout(1.0)
+                self.socket_wrapper.socket.settimeout(1.0) # Quizas se puede disminuir
                 logging.debug(f' Receiving ack, seq from {self.server_address[0]}:{self.server_address[1]}')
                 data, server_address = self.socket_wrapper.recvfrom(ACK_SEQ_SIZE)
                 if (server_address != self.server_address):

@@ -10,14 +10,14 @@ class ServerClientUpload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def start(self) -> None:
-        self.create_socket_and_reply_handshake()
+        self.create_socket_and_reply_handshake() 
         end = False
         last_seq = 0
         self.socket.set_timeout(TIMEOUT)
         while not end:
             #Recieve data
             try:
-                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE) 
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
                 logging.debug(f' Recieved package \n{data}\n from: {address} with seq: {seq} and end: {end} with len {len(data)}')
 
@@ -34,7 +34,7 @@ class ServerClientUpload(ServerClient):
                 
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
+
                 
         self.socket.set_timeout(TIMEOUT)
         self.end()
-

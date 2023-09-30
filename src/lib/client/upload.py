@@ -75,12 +75,12 @@ class Upload:
         logging.debug(f' Start to send file {self.file} to {self.server_address[0]}:{self.server_address[1]}')
         while not end and attempts < MAX_ATTEMPTS:
             try:
-                chunk, end = self.file_handler.read_next_chunk(seq)
+                chunk, end = self.file_handler.read_next_chunk(sequence_number)
                 if end or len(chunk) == 0:
                     logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
                 if len(chunk) == 0:
                     break
-                package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, data)
+                package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, chunk)
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, sequence_number):
                     logging.debug(' File upload failed: too many attempts')

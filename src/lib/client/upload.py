@@ -80,7 +80,7 @@ class Upload:
                     logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
                 if len(chunk) == 0:
                     break
-                package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, data)
+                package = NormalPackage.pack_to_send(sequence_number - 1, sequence_number, end, 0, chunk)
                 self.socket_wrapper.sendto(self.server_address, package)
                 if not self.ack_receive(package, sequence_number):
                     logging.debug(' File upload failed: too many attempts')

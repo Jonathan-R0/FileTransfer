@@ -10,14 +10,17 @@ class ServerClientUpload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def start(self) -> None:
-        self.create_socket_and_reply_handshake()
+        self.create_socket_and_reply_handshake() 
         end = False
         last_seq = 0
-        self.socket.settimeout(TIMEOUT) #TODO revisar si esto esta bien
+        self.socket.set_timeout(TIMEOUT)
         while not end:
             #Recieve data
             try:
-                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                #Posible bug en perdida de paquetes: que pasa si mandan un initial handshake package
+                #porque el ack no llego al cliente? Hay que hacer un id de mensaje, para saber si es
+                #un ack o un paquete normal
+                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE) 
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
                 logging.debug(f' Recieved package \n{data.decode()}\n from: {address} with seq: {seq} and end: {end} with len {len(data)}')
 
@@ -35,6 +38,6 @@ class ServerClientUpload(ServerClient):
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
 
-        self.socket_wrapper.socket.settimeout(None)
+        self.socket.set_timeout(None) #Si termina el server, no se si hace falta esta linea
         self.end()
 

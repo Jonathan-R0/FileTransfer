@@ -30,12 +30,11 @@ class ServerClient(threading.Thread):
         self.socket.sendto(self.address, NormalPackage.pack_to_send(0, 0, b'', True, error))
 
     def create_socket_and_reply_handshake(self) -> None:
-        self.socket = SocketWrapper()
-        self.socket.bind("", 0)
+        self.create_socket()
         logging.debug(f' Replying to handshake from: {self.address}')
         self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
 
-    def create_socket_with_no_reply(self) -> None:
+    def create_socket(self) -> None:
         self.socket = SocketWrapper()
         self.socket.bind("", 0)
 

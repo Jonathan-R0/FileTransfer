@@ -6,7 +6,7 @@ from lib.common.config import *
 from lib.common.file_handler import FileHandler
 import os
 
-if uploader_args.verbose:
+if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
@@ -34,3 +34,4 @@ if __name__ == '__main__':
         print(f' Recieved package from: {address} with seq: {seq} and end: {end}')
         socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
     file_handler.close()
+    socket.close()

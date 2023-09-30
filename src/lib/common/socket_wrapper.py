@@ -12,7 +12,8 @@ class SocketWrapper:
         """El bind conecta el socket a un host y un puerto."""
         self.socket.bind((host, port))
 
-    def sendto(self, address: str | tuple[Any, ...], data: str | bytes) -> None:
+    def sendto(self, address: str | tuple[Any, ...],
+               data: str | bytes) -> None:
         """Envia un mensaje a la direccion especificada."""
         if isinstance(data, str):
             data = data.encode()
@@ -28,7 +29,7 @@ class SocketWrapper:
         """Escucha a un cliente."""
         data, address = self.recvfrom(1024)
         return data, address
-    
+
     def set_timeout(self, timeout: Optional[float]) -> None:
         """Setea el timeout del socket."""
         self.socket.settimeout(timeout)

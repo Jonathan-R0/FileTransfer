@@ -1,21 +1,34 @@
-from lib.client.upload import Upload
 from lib.client.upload_args import uploader_args
 from lib.common.socket_wrapper import SocketWrapper
-from lib.common.package import *
+from lib.common.package import (
+    InitialHandshakePackage,
+    AckSeqPackage,
+    NormalPackage
+)
 from lib.common.file_handler import FileHandler
-from lib.common.config import *
-from lib.client.config import *
+from lib.common.config import (
+    ACK_SEQ_SIZE,
+    TIMEOUT
+)
+from lib.client.config import MAX_ATTEMPTS
 import logging
 import os
 
 if uploader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
+
 def comp_host(host1: str, host2: str) -> bool:
     local_host_addr = {'localhost', '127.0.0.1'}
-    return host1 == host2 or (host1 in local_host_addr and host2 in local_host_addr)
+    return host1 == host2 or\
+        (host1 in local_host_addr and host2 in local_host_addr)
 
-def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: tuple) -> None:
+
+def sw_client_upload(
+        socket: SocketWrapper,
+        file_handler: FileHandler,
+        address: tuple
+        ) -> None:
     end = False
     ack = 0
     seq = 1
@@ -24,8 +37,10 @@ def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: 
         try:
             chunk, end = file_handler.read_next_chunk(seq)
             if end or len(chunk) == 0:
-                logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
-            socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
+                logging.debug(
+                    f' Sending last chunk: {chunk} with size: {len(chunk)}')
+            socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
+                          chunk, end, 0))
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
             new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
             logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
@@ -40,6 +55,7 @@ def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: 
             logging.debug(' A timeout has occurred, no ack was recieved')
     logging.debug(f' Client {address} ended')
 
+
 if __name__ == '__main__':
 
     # File System Configuration
@@ -52,8 +68,9 @@ if __name__ == '__main__':
     except OSError:
         logging.debug(f' File {uploader_args.FILENAME} could not be opened')
         exit(1)
-    except Exception as e:
-        logging.debug(f' File {uploader_args.FILENAME} could not be opened, generic exception was raised')
+    except Exception:
+        logging.debug(f' File {uploader_args.FILENAME} could not be ' +
+                      'opened, generic exception was raised')
         exit(1)
 
     # Network Configuration
@@ -64,28 +81,33 @@ if __name__ == '__main__':
     arg_addr = (uploader_args.ADDR, uploader_args.PORT)
     address = None
     while handshake_attempts < MAX_ATTEMPTS:
-        try: 
-            socket.sendto(arg_addr, 
-                InitialHandshakePackage.pack_to_send(1, 1, file_handler.size(), uploader_args.FILENAME))
+        try:
+            socket.sendto(arg_addr,
+                          InitialHandshakePackage.pack_to_send(
+                            1,
+                            1,
+                            file_handler.size(),
+                            uploader_args.FILENAME)
+                          )
             raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
             ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-            logging.debug(f' Recieved ack: {ack} and seq: {seq} from {address}')
+            logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
             if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
                 break
             else:
                 handshake_attempts += 1
         except TimeoutError:
             handshake_attempts += 1
-            logging.debug(f' Handshake attempt {handshake_attempts} to {arg_addr} failed')
-    
+            logging.debug(f' Handshake attempt {handshake_attempts} ' +
+                          f'to {arg_addr} failed')
+
     if handshake_attempts == MAX_ATTEMPTS:
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
     try:
         sw_client_upload(socket, file_handler, address)
-        #aca se deberia elegir si sw_upload o sr_upload
+        # aca se deberia elegir si sw_upload o sr_upload
     finally:
         socket.close()
         file_handler.close()
-    

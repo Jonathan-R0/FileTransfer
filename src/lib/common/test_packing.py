@@ -4,7 +4,8 @@ from package import NormalPackage
 
 # packeo un paquete de xS letras
 package = NormalPackage(2, 3, 10, True, b'probando')
-a = struct.pack(f'!III?{package.size}s', package.ack, package.seq, package.size, package.end, package.data)
+a = struct.pack(f'!III?{package.size}s', package.ack, package.seq,
+                package.size, package.end, package.data)
 
 # desempaqueto el header del paquete para obtener el tamaño de la data
 header_from_package = struct.unpack('!III?', a[:13])

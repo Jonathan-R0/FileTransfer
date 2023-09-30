@@ -9,4 +9,3 @@ if __name__ == '__main__':
     logging.debug(' Starting server...')
     server = Server(server_args.ADDR, server_args.PORT, server_args.DIRPATH)
     server.start()
-    

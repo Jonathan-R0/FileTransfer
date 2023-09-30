@@ -1,20 +1,36 @@
 from lib.client.download_args import downloader_args
 from lib.common.socket_wrapper import SocketWrapper
-from lib.common.package import *
+
+from lib.common.package import (
+    InitialHandshakePackage,
+    AckSeqPackage,
+)
 import logging
-from lib.common.config import *
-from lib.client.config import *
+from lib.common.config import (
+    NORMAL_PACKAGE_SIZE,
+    NORMAL_PACKAGE_FORMAT,
+    ACK_SEQ_SIZE,
+    TIMEOUT
+)
+from lib.client.config import MAX_ATTEMPTS
 from lib.common.file_handler import FileHandler
 import os
+import struct
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
+
 def comp_host(host1: str, host2: str) -> bool:
     local_host_addr = {'localhost', '127.0.0.1'}
-    return host1 == host2 or (host1 in local_host_addr and host2 in local_host_addr)
+    return host1 == host2 or\
+        (host1 in local_host_addr and host2 in local_host_addr)
 
-def sw_client_download(socket: SocketWrapper, file_handler: FileHandler) -> None:
+
+def sw_client_download(
+        socket: SocketWrapper,
+        file_handler: FileHandler
+        ) -> None:
     end = False
     last_seq = 0
     lost_pkg_attempts = 0
@@ -22,20 +38,27 @@ def sw_client_download(socket: SocketWrapper, file_handler: FileHandler) -> None
     while not end and lost_pkg_attempts < MAX_ATTEMPTS:
         try:
             raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
-            logging.debug(f' Recieved package \n{raw_data}\n from: {address} with len {len(raw_data)} and end: {end}')
+            ack, seq, end, error, data = struct.unpack(
+                NORMAL_PACKAGE_FORMAT,
+                raw_data
+            )
+            logging.debug(f' Recieved package \n{raw_data}\n from: ' +
+                          f'{address} with len {len(raw_data)} and end: {end}')
             if seq == last_seq + 1 and ack == last_seq:
                 lost_pkg_attempts = 0
                 last_seq = seq
                 file_handler.append_chunk(data)
-                logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
+                logging.debug(f' Recieved package from: {address} with ' +
+                              f'seq: {seq} and end: {end}')
                 socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
             else:
                 lost_pkg_attempts += 1
-                logging.debug(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
+                logging.debug(f' Lost package from: {address} with seq: ' +
+                              f'{seq} and last good seq: {last_seq}')
         except TimeoutError:
             lost_pkg_attempts += 1
             logging.debug(' A timeout has occurred, no package was recieved')
+
 
 if __name__ == '__main__':
 
@@ -51,27 +74,33 @@ if __name__ == '__main__':
     arg_addr = (downloader_args.ADDR, downloader_args.PORT)
     address = None
     while handshake_attempts < MAX_ATTEMPTS:
-        try: 
-            socket.sendto(arg_addr, 
-                InitialHandshakePackage.pack_to_send(0, 1, 0, downloader_args.FILENAME))
+        try:
+            socket.sendto(arg_addr,
+                          InitialHandshakePackage.pack_to_send(
+                            0,
+                            1,
+                            0,
+                            downloader_args.FILENAME)
+                          )
             raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
             ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-            logging.debug(f' Recieved ack: {ack} and seq: {seq} from {address}')
+            logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
             if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
                 break
             else:
                 handshake_attempts += 1
         except TimeoutError:
             handshake_attempts += 1
-            logging.debug(f' Handshake attempt {handshake_attempts} to {arg_addr} failed')
-    
+            logging.debug(f' Handshake attempt {handshake_attempts} ' +
+                          f'to {arg_addr} failed')
+
     if handshake_attempts == MAX_ATTEMPTS:
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
     try:
         sw_client_download(socket, file_handler)
-        #aca se deberia elegir si sw_download o sr_download
+        # aca se deberia elegir si sw_download o sr_download
     finally:
         file_handler.close()
         socket.close()

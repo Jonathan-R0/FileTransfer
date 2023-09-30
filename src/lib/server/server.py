@@ -26,8 +26,17 @@ class Server:
             logging.debug(' ...')
             initial_package = InitialHandshakePackage(data)
             self.clients_lock.acquire()
-            self.push_client(ServerClientUpload(initial_package, address, self.dirpath) if initial_package.is_upload
-                             else ServerClientDownload(initial_package, address, self.dirpath))
+            self.push_client(ServerClientUpload(
+                                initial_package,
+                                address,
+                                self.dirpath
+                            )
+                            if initial_package.is_upload
+                            else ServerClientDownload(
+                                initial_package,
+                                address,
+                                self.dirpath
+                            ))
             self.clients_lock.release()
 
     def listen_to_new_connections(self) -> tuple[bytes, ...]:

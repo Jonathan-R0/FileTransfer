@@ -13,7 +13,7 @@ class ServerClientUpload(ServerClient):
         self.create_socket_and_reply_handshake()
         end = False
         last_seq = 0
-        self.socket.settimeout(TIMEOUT)
+        self.socket.settimeout(TIMEOUT) #TODO revisar si esto esta bien
         while not end:
             #Recieve data
             try:

@@ -44,7 +44,17 @@ if __name__ == '__main__':
 
     # File System Configuration
     path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
-    file_handler = FileHandler(open(file=path, mode='rb'))
+    try:
+        file_handler = FileHandler(open(file=path, mode='rb'))
+    except FileNotFoundError:
+        logging.debug(f' File {uploader_args.FILENAME} not found')
+        exit(1)
+    except OSError:
+        logging.debug(f' File {uploader_args.FILENAME} could not be opened')
+        exit(1)
+    except Exception as e:
+        logging.debug(f' File {uploader_args.FILENAME} could not be opened, generic exception was raised')
+        exit(1)
 
     # Network Configuration
     socket = SocketWrapper()

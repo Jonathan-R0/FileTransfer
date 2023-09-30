@@ -29,5 +29,8 @@ class FileHandler:
     def size(self) -> int:
         return self.len
 
+    def rollback_write(self) -> None:
+        os.remove(self.file.name)
+
     def close(self):
         self.file.close()

@@ -20,6 +20,8 @@ class ServerClient(threading.Thread):
                                                         .decode()\
                                                         .rstrip("\0"))
             self.file = FileHandler(open(file=path, mode= 'wb' if initial_package.is_upload else 'rb'))
+        except FileNotFoundError as e:
+            self.return_error_to_client(404)
         except OSError as e:
             self.return_error_to_client(500) # TODO cambiar los errores para que no matcheen los codigos de error http...
         except ValueError as e:

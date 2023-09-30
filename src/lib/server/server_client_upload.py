@@ -38,6 +38,9 @@ class ServerClientUpload(ServerClient):
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
                 lost_pkg_attempts += 1
+                if lost_pkg_attempts == MAX_ATTEMPTS and not end:
+                    logging.debug(' Max attempts reached, ending connection and deleting corrupted file')
+                    self.file.rollback_write()
 
         self.socket.set_timeout(None)
         self.end()

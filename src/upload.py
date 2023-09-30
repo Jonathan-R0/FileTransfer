@@ -24,8 +24,6 @@ def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: 
         chunk, end = file_handler.read_next_chunk(seq)
         if end or len(chunk) == 0:
             logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
-        #if len(chunk) == 0:
-        #    break
         socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
         raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
         new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)

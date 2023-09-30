@@ -21,8 +21,8 @@ class FileHandler:
     def append_chunk(self, chunk: bytes) -> None:
         try:
             self.file.write(chunk.decode().rstrip('\0').encode())
-        except:
-            self.file.write(chunk)
+        except _ as _:
+            self.file.write(chunk) # Not a zero ending string.
 
     def size(self) -> int:
         return self.len

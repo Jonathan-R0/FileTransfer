@@ -21,6 +21,7 @@ def sw_client_download(socket: SocketWrapper, file_handler: FileHandler) -> None
         ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
         logging.debug(f' Recieved package \n{raw_data}\n from: {address} with len {len(raw_data)} and end: {end}')
         if seq == last_seq + 1 and ack == last_seq:
+            lost_pkg_attempts = 0
             last_seq = seq
             file_handler.append_chunk(data)
             logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
@@ -28,8 +29,6 @@ def sw_client_download(socket: SocketWrapper, file_handler: FileHandler) -> None
         else:
             lost_pkg_attempts += 1
             logging.debug(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
-    file_handler.close()
-    socket.close()
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
@@ -66,5 +65,9 @@ if __name__ == '__main__':
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
-    #aca se deberia elegir si sw_download o sr_download
-    sw_client_download(socket, file_handler)
+    try:
+        sw_client_download(socket, file_handler)
+        #aca se deberia elegir si sw_download o sr_download
+    finally:
+        file_handler.close()
+        socket.close()

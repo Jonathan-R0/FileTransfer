@@ -11,10 +11,7 @@ class ServerClientUpload(ServerClient):
 
     def start(self) -> None:
         self.create_socket_and_reply_handshake() 
-        
-        #aca se deberia elegir si sw_upload o sr_upload
-        self.sw_upload()
-
+        self.sw_upload() if self.is_saw else self.sr_upload()
 
     def sw_upload(self) -> None:
         end = False
@@ -26,7 +23,6 @@ class ServerClientUpload(ServerClient):
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE) 
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
                 logging.debug(f' Recieved package \n{data}\n from: {address} with seq: {seq} and end: {end} with len {len(data)}')
-
 
                 #Respond to the client that i recieved the data if the data is the next one
                 if seq == last_seq +1:
@@ -41,5 +37,8 @@ class ServerClientUpload(ServerClient):
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
 
-        self.socket.set_timeout(TIMEOUT)
+        self.socket.set_timeout(None)
         self.end()
+
+    def sr_upload(self) -> None:
+        pass

@@ -10,10 +10,7 @@ class ServerClientDownload(ServerClient):
 
     def start(self) -> None:
         self.create_socket_and_reply_handshake()
-        
-        #aca se deberia elegir si sw_download o sr_download
-        self.sw_download()
-
+        self.sw_download() if self.is_saw else self.sr_download()
 
     def sw_download(self):
         end = False
@@ -46,3 +43,6 @@ class ServerClientDownload(ServerClient):
         self.socket.set_timeout(None)
         self.end()
         
+    def sr_download(self):
+        pass
+    

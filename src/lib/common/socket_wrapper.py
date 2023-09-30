@@ -29,7 +29,7 @@ class SocketWrapper:
         data, address = self.recvfrom(1024)
         return data, address
     
-    def set_timeout(self, timeout: float) -> None:
+    def set_timeout(self, timeout: Optional[float]) -> None:
         """Setea el timeout del socket."""
         self.socket.settimeout(timeout)
 

@@ -34,8 +34,6 @@ def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: 
             ack += 1
         else:
             lost_pkg_attempts += 1
-    socket.close()
-    file_handler.close()
     logging.debug(f' Client {address} ended')
 
 if __name__ == '__main__':
@@ -70,6 +68,10 @@ if __name__ == '__main__':
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
-    sw_client_upload(socket, file_handler, address)
+    try:
+        sw_client_upload(socket, file_handler, address)
+        #aca se deberia elegir si sw_upload o sr_upload
+    finally:
+        socket.close()
+        file_handler.close()
     
-    #aca se deberia elegir si sw_upload o sr_upload

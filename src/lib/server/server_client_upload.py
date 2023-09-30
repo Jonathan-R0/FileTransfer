@@ -4,7 +4,8 @@ from lib.common.config import (
     TIMEOUT,
     MAX_ATTEMPTS,
     NORMAL_PACKAGE_SIZE,
-    NORMAL_PACKAGE_FORMAT
+    NORMAL_PACKAGE_FORMAT,
+    WINDOW_SIZE
 )
 import logging
 import struct
@@ -73,4 +74,46 @@ class ServerClientUpload(ServerClient):
         self.end()
 
     def sr_upload(self) -> None:
-        pass
+        received_chunks = {}
+        end = False
+        available_seats = WINDOW_SIZE
+        last_seq = 0
+        # a chequear el while!! como en upload.py
+        while not end and available_seats > 0:
+            raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+            _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
+                                                     raw_data)
+            logging.debug(
+                    f' Recieved package \n{data}\n from: {address} ' +
+                    f'with seq: {seq} and end: {end} with len {len(data)}'
+                )
+            # if i dont have the package, save it and send ack
+            if seq not in received_chunks:
+                received_chunks[seq] = data
+                self.socket.sendto(
+                    address,
+                    AckSeqPackage.pack_to_send(seq, seq)
+                )
+                logging.debug(
+                    f' Recieved package from: {address} ' +
+                    f'with seq: {seq} and end: {end}'
+                )
+                available_seats -= 1
+            else:
+                # If the package was already received, send the same ack
+                self.socket.sendto(
+                    address,
+                    AckSeqPackage.pack_to_send(seq, seq)
+                )
+            # if the package is next to the first one, write it and add a seat
+            # also, check if there are more packages to write
+            while (last_seq + 1) in received_chunks:
+                last_seq += 1
+                self.file.append_chunk(received_chunks[last_seq])
+                available_seats += 1
+                del received_chunks[last_seq]
+
+            if end:
+                break
+        
+        self.end()

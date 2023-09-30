@@ -8,7 +8,8 @@ from lib.common.package import (
 from lib.common.file_handler import FileHandler
 from lib.common.config import (
     ACK_SEQ_SIZE,
-    TIMEOUT
+    TIMEOUT,
+    WINDOW_SIZE
 )
 from lib.client.config import MAX_ATTEMPTS
 import logging
@@ -54,6 +55,70 @@ def sw_client_upload(
             lost_pkg_attempts += 1
             logging.debug(' A timeout has occurred, no ack was recieved')
     logging.debug(f' Client {address} ended')
+
+
+def resend_missing_chunks(
+        socket: SocketWrapper,
+        address: tuple,
+        sent_chunks: dict[int, bytes]
+        ) -> None:
+    for seq, chunk in sent_chunks.items():
+        socket.sendto(address, NormalPackage.pack_to_send(0, seq, chunk, 0, 1))
+        logging.debug(f' Resending chunk with seq:{seq} and size:{len(chunk)}')
+
+
+def sr_client_upload(
+        socket: SocketWrapper,
+        file_handler: FileHandler,
+        address: tuple
+        ) -> None:
+    end = False
+    ack = 0
+    seq = 1
+    avalable_seats = WINDOW_SIZE
+    sent_chunks = {}
+    # los while habria que revisarlos
+    while not end:
+        try:
+            while avalable_seats > 0:
+                # envio los que entren en mi window
+                chunk, end = file_handler.read_next_chunk(seq)
+                if end or len(chunk) == 0:
+                    logging.debug(
+                        f' Sending last chunk: {chunk} with size:{len(chunk)}')
+                socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
+                              chunk, end, 0))
+                avalable_seats -= 1
+                seq += 1
+                ack += 1
+                sent_chunks[seq] = chunk
+
+                # una vez que envie todos los que entran en mi window ack
+                raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+                new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
+                logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+
+                # si el ack es igual que el menor de todos los que envie
+                # solo ahi libero un asiento
+
+                if new_seq == min(sent_chunks.keys()):
+                    avalable_seats += 1
+                    sent_chunks.pop(min(sent_chunks.keys()))
+
+        # este timeout ocurre cuando dejo de recibir acks
+        except TimeoutError:
+            logging.debug(' A timeout has occurred, no ack was recieved')
+            logging.debug(f' Resending chunks: {sent_chunks}')
+            resend_missing_chunks(socket, address, sent_chunks)
+            # una vez que reenvie todos los chunks que no recibi respuesta
+            # espero un ack
+            raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+            new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
+            logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+
+            if new_seq == min(sent_chunks.keys()):
+                avalable_seats += 1
+                sent_chunks.pop(min(sent_chunks.keys()))
 
 
 if __name__ == '__main__':

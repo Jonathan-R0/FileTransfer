@@ -28,6 +28,10 @@ class SocketWrapper:
         """Escucha a un cliente."""
         data, address = self.recvfrom(1024)
         return data, address
+    
+    def set_timeout(self, timeout: float) -> None:
+        """Setea el timeout del socket."""
+        self.socket.settimeout(timeout)
 
     def close(self) -> None:
         """Cierra el socket."""

@@ -31,7 +31,7 @@ class AckSeqPackage:
 
     @staticmethod
     def pack_to_send(ack: int, seq: int) -> str:
-        return struct.pack(ACK_SEQ_FORMAT, ack, seq).decode()
+        return struct.pack(ACK_SEQ_FORMAT, ack, seq) # saque .decode() que tenia al final
 
 
 

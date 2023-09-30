@@ -15,6 +15,31 @@ def comp_host(host1: str, host2: str) -> bool:
     local_host_addr = {'localhost', '127.0.0.1'}
     return host1 == host2 or (host1 in local_host_addr and host2 in local_host_addr)
 
+def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: tuple) -> None:
+    end = False
+    ack = 0
+    seq = 1
+    lost_pkg_attempts = 0
+    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
+        chunk, end = file_handler.read_next_chunk(seq)
+        if end or len(chunk) == 0:
+            logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
+        #if len(chunk) == 0:
+        #    break
+        socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
+        raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+        new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
+        logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+        if new_seq == seq == new_ack:
+            lost_pkg_attempts = 0
+            seq += 1
+            ack += 1
+        else:
+            lost_pkg_attempts += 1
+    socket.close()
+    file_handler.close()
+    logging.debug(f' Client {address} ended')
+
 if __name__ == '__main__':
 
     # File System Configuration
@@ -47,27 +72,6 @@ if __name__ == '__main__':
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
-    end = False
-    ack = 0
-    seq = 1
-    lost_pkg_attempts = 0
-    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
-        chunk, end = file_handler.read_next_chunk(seq)
-        if end or len(chunk) == 0:
-            logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
-        if len(chunk) == 0:
-            break
-        socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
-        raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-        new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-        logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
-        if new_seq == seq == new_ack:
-            lost_pkg_attempts = 0
-            seq += 1
-            ack += 1
-        else:
-            lost_pkg_attempts += 1
-    socket.close()
-    file_handler.close()
-    logging.debug(f' Client {address} ended')
+    sw_client_upload(socket, file_handler, address)
     
+    #aca se deberia elegir si sw_upload o sr_upload

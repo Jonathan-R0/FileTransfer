@@ -11,6 +11,12 @@ class ServerClientUpload(ServerClient):
 
     def start(self) -> None:
         self.create_socket_and_reply_handshake() 
+        
+        #aca se deberia elegir si sw_upload o sr_upload
+        self.sw_upload()
+
+
+    def sw_upload(self) -> None:
         end = False
         last_seq = 0
         self.socket.set_timeout(TIMEOUT)

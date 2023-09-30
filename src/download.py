@@ -11,6 +11,26 @@ def comp_host(host1: str, host2: str) -> bool:
     local_host_addr = {'localhost', '127.0.0.1'}
     return host1 == host2 or (host1 in local_host_addr and host2 in local_host_addr)
 
+def sw_client_download(socket: SocketWrapper, file_handler: FileHandler) -> None:
+    end = False
+    last_seq = 0
+    lost_pkg_attempts = 0
+
+    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
+        raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+        ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
+        logging.debug(f' Recieved package \n{raw_data}\n from: {address} with len {len(raw_data)} and end: {end}')
+        if seq == last_seq + 1 and ack == last_seq:
+            last_seq = seq
+            file_handler.append_chunk(data)
+            logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
+            socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+        else:
+            lost_pkg_attempts += 1
+            logging.debug(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
+    file_handler.close()
+    socket.close()
+
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
@@ -46,21 +66,5 @@ if __name__ == '__main__':
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
-    end = False
-    last_seq = 0
-    lost_pkg_attempts = 0
-
-    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
-        raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-        ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
-        logging.debug(f' Recieved package \n{raw_data}\n from: {address} with len {len(raw_data)} and end: {end}')
-        if seq == last_seq + 1 and ack == last_seq:
-            last_seq = seq
-            file_handler.append_chunk(data)
-            logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
-            socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
-        else:
-            lost_pkg_attempts += 1
-            logging.debug(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
-    file_handler.close()
-    socket.close()
+    #aca se deberia elegir si sw_download o sr_download
+    sw_client_download(socket, file_handler)

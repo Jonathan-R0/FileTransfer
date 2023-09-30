@@ -9,10 +9,16 @@ class ServerClientDownload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def start(self) -> None:
+        self.create_socket_and_reply_handshake()
+        
+        #aca se deberia elegir si sw_download o sr_download
+        self.sw_download()
+
+
+    def sw_download(self):
         end = False
         ack = 0
         seq = 1
-        self.create_socket_and_reply_handshake()
 
         self.socket.set_timeout(TIMEOUT)
         

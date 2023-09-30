@@ -16,10 +16,11 @@ class ServerClientDownload(ServerClient):
         end = False
         ack = 0
         seq = 1
+        lost_pkg_attempts = 0
 
         self.socket.set_timeout(TIMEOUT)
         
-        while not end:
+        while not end and lost_pkg_attempts < MAX_ATTEMPTS:
             try:
                 #send the next chunk
                 chunk, end = self.file.read_next_chunk(seq)
@@ -33,12 +34,14 @@ class ServerClientDownload(ServerClient):
                 new_ack, new_seq = AckSeqPackage.unpack_from_client(raw_data)
                 logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
                 if new_seq == seq == new_ack:
+                    lost_pkg_attempts = 0
                     seq += 1
                     ack += 1
                 else:
-                    pass # TODO handle late or lost package
+                    lost_pkg_attempts += 1
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no ack was recieved')
+                lost_pkg_attempts += 1
         
         self.socket.set_timeout(None)
         self.end()

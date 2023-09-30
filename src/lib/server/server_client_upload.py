@@ -16,8 +16,9 @@ class ServerClientUpload(ServerClient):
     def sw_upload(self) -> None:
         end = False
         last_seq = 0
+        lost_pkg_attempts = 0
         self.socket.set_timeout(TIMEOUT)
-        while not end:
+        while not end and lost_pkg_attempts < MAX_ATTEMPTS:
             #Recieve data
             try:
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE) 
@@ -36,6 +37,7 @@ class ServerClientUpload(ServerClient):
                 
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
+                lost_pkg_attempts += 1
 
         self.socket.set_timeout(None)
         self.end()

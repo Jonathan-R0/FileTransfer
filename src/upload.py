@@ -21,19 +21,23 @@ def sw_client_upload(socket: SocketWrapper, file_handler: FileHandler, address: 
     seq = 1
     lost_pkg_attempts = 0
     while not end and lost_pkg_attempts < MAX_ATTEMPTS:
-        chunk, end = file_handler.read_next_chunk(seq)
-        if end or len(chunk) == 0:
-            logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
-        socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
-        raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-        new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-        logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
-        if new_seq == seq == new_ack:
-            lost_pkg_attempts = 0
-            seq += 1
-            ack += 1
-        else:
+        try:
+            chunk, end = file_handler.read_next_chunk(seq)
+            if end or len(chunk) == 0:
+                logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
+            socket.sendto(address, NormalPackage.pack_to_send(ack, seq, chunk, end, 0))
+            raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+            new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
+            logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+            if new_seq == seq == new_ack:
+                lost_pkg_attempts = 0
+                seq += 1
+                ack += 1
+            else:
+                lost_pkg_attempts += 1
+        except TimeoutError:
             lost_pkg_attempts += 1
+            logging.debug(' A timeout has occurred, no ack was recieved')
     logging.debug(f' Client {address} ended')
 
 if __name__ == '__main__':

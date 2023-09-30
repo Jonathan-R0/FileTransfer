@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # File System Configuration
     path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
-    file_handler = FileHandler(open(file=path, mode='ab'))
+    file_handler = FileHandler(open(file=path, mode='wb'))
 
     # Network Configuration
     socket = SocketWrapper()
@@ -52,15 +52,15 @@ if __name__ == '__main__':
 
     while not end and lost_pkg_attempts < MAX_ATTEMPTS:
         raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-        print(f' Recieved package \n{raw_data.decode()}\n from: {address} with len {len(raw_data)}')
         ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
+        logging.debug(f' Recieved package \n{raw_data}\n from: {address} with len {len(raw_data)} and end: {end}')
         if seq == last_seq + 1 and ack == last_seq:
             last_seq = seq
             file_handler.append_chunk(data)
-            print(f' Recieved package from: {address} with seq: {seq} and end: {end}')
+            logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
             socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
         else:
             lost_pkg_attempts += 1
-            print(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
+            logging.debug(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
     file_handler.close()
     socket.close()

@@ -35,6 +35,5 @@ class ServerClientUpload(ServerClient):
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no package was recieved')
 
-                
         self.socket.set_timeout(TIMEOUT)
         self.end()

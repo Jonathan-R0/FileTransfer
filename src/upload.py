@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # Network Configuration
     socket = SocketWrapper()
     socket.bind("", 0)
-    socket.set_timeout(3.0)
+    socket.set_timeout(TIMEOUT)
     handshake_attempts = 0
     arg_addr = (uploader_args.ADDR, uploader_args.PORT)
     address = None
@@ -50,7 +50,8 @@ if __name__ == '__main__':
     end = False
     ack = 0
     seq = 1
-    while not end:
+    lost_pkg_attempts = 0
+    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
         chunk, end = file_handler.read_next_chunk(seq)
         if end or len(chunk) == 0:
             logging.debug(f' Sending last chunk: {chunk} with size: {len(chunk)}')
@@ -61,10 +62,11 @@ if __name__ == '__main__':
         new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
         logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
         if new_seq == seq == new_ack:
+            lost_pkg_attempts = 0
             seq += 1
             ack += 1
         else:
-            pass # TODO handle late or lost package
+            lost_pkg_attempts += 1
     socket.close()
     file_handler.close()
     logging.debug(f' Client {address} ended')

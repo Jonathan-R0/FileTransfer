@@ -19,7 +19,7 @@ class ServerClientUpload(ServerClient):
             print(f' Recieved package \n{data.decode()}\n from: {address} with len {len(data)}')
 
             #Respond to the client that i recieved the data
-            self.file.append_chunk(data)
+            self.file.append_chunk(data) # TODO append only when i checked that the chunk is the right one
             print(f' Recieved package from: {address} with seq: {seq} and end: {end}')
             self.socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
 

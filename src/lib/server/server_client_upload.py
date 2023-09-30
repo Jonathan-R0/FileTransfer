@@ -49,6 +49,7 @@ class ServerClientUpload(ServerClient):
                         address,
                         AckSeqPackage.pack_to_send(seq, seq)
                     )
+                    lost_pkg_attempts = 0
                 else:
                     logging.debug(
                         f' Recieved package from: {address} with seq: ' +

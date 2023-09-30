@@ -3,14 +3,18 @@ from lib.common.socket_wrapper import SocketWrapper
 from lib.common.package import *
 import logging
 from lib.common.config import *
+from lib.client.config import *
 from lib.common.file_handler import FileHandler
 import os
+
+def comp_host(host1: str, host2: str) -> bool:
+    local_host_addr = {'localhost', '127.0.0.1'}
+    return host1 == host2 or (host1 in local_host_addr and host2 in local_host_addr)
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
-    print(downloader_args)
 
     # File System Configuration
     path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
@@ -19,19 +23,44 @@ if __name__ == '__main__':
     # Network Configuration
     socket = SocketWrapper()
     socket.bind("", 0)
-    socket.sendto((downloader_args.ADDR, downloader_args.PORT), 
-        InitialHandshakePackage.pack_to_send(0, 1, 0, downloader_args.FILENAME))
-    raw_data, addr = socket.recvfrom(ACK_SEQ_SIZE)
-    print(f' Replying to handshake from: {addr}')
+    socket.set_timeout(TIMEOUT)
+    handshake_attempts = 0
+    arg_addr = (downloader_args.ADDR, downloader_args.PORT)
+    address = None
+    while handshake_attempts < MAX_ATTEMPTS:
+        try: 
+            socket.sendto(arg_addr, 
+                InitialHandshakePackage.pack_to_send(0, 1, 0, downloader_args.FILENAME))
+            raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
+            ack, seq = AckSeqPackage.unpack_from_client(raw_data)
+            logging.debug(f' Recieved ack: {ack} and seq: {seq} from {address}')
+            if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
+                break
+            else:
+                handshake_attempts += 1
+        except TimeoutError:
+            handshake_attempts += 1
+            logging.debug(f' Handshake attempt {handshake_attempts} to {arg_addr} failed')
+    
+    if handshake_attempts == MAX_ATTEMPTS:
+        logging.debug(f' Handshake to {arg_addr} failed')
+        exit(1)
 
     end = False
+    last_seq = 0
+    lost_pkg_attempts = 0
 
-    while not end:
+    while not end and lost_pkg_attempts < MAX_ATTEMPTS:
         raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
         print(f' Recieved package \n{raw_data.decode()}\n from: {address} with len {len(raw_data)}')
         ack, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT, raw_data)
-        file_handler.append_chunk(data)
-        print(f' Recieved package from: {address} with seq: {seq} and end: {end}')
-        socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+        if seq == last_seq + 1 and ack == last_seq:
+            last_seq = seq
+            file_handler.append_chunk(data)
+            print(f' Recieved package from: {address} with seq: {seq} and end: {end}')
+            socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+        else:
+            lost_pkg_attempts += 1
+            print(f' Lost package from: {address} with seq: {seq} and last good seq: {last_seq}')
     file_handler.close()
     socket.close()

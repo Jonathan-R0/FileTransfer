@@ -19,9 +19,11 @@ class FileHandler:
         return chunk, len(chunk) < self.chunk_size
 
     def append_chunk(self, chunk: bytes) -> None:
+        if len(chunk) == 0:
+            return
         try:
             self.file.write(chunk.decode().rstrip('\0').encode())
-        except _ as _:
+        except Exception as _:
             self.file.write(chunk) # Not a zero ending string.
 
     def size(self) -> int:

@@ -31,6 +31,7 @@ class ServerClientUpload(ServerClient):
                     self.file.append_chunk(data)
                     logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end}')
                     self.socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+                    lost_pkg_attempts = 0
                 else:
                     logging.debug(f' Recieved package from: {address} with seq: {seq} and end: {end} but missed previous package')
                     self.socket.sendto(address, AckSeqPackage.pack_to_send(last_seq, last_seq))

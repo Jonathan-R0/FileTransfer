@@ -19,19 +19,19 @@ class ServerClientUpload(ServerClient):
             dirpath: str
             ):
         super().__init__(initial_package, address, dirpath)
-        
+
     def start(self) -> None:
         self.create_socket_and_reply_handshake()
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         try:
             raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
         except TimeoutError:
-                self.end()
-                return
+            self.end()
+            return
         logging.debug(f' New client: {address}')
         self.socket.set_timeout(None)
         self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
-        
+
     def sw_upload(self, raw_data: bytes, address) -> None:
         end = False
         last_seq = 0
@@ -41,7 +41,8 @@ class ServerClientUpload(ServerClient):
             # Recieve data
             try:
                 if last_seq > 0:
-                    raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                    raw_data, \
+                        address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                          raw_data)
                 logging.debug(
@@ -72,7 +73,8 @@ class ServerClientUpload(ServerClient):
             except TimeoutError:
                 if not end:
                     logging.debug(' A timeout has occurred, ' +
-                                'ending connection and deleting corrupted file')
+                                  'ending connection and ' +
+                                  'deleting corrupted file')
                     self.file.rollback_write()
                 break
         logging.debug(f' Client {self.address} ended')

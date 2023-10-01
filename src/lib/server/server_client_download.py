@@ -50,7 +50,7 @@ class ServerClientDownload(ServerClient):
             except TimeoutError:
                 logging.debug(' A timeout has occurred, no ack was recieved')
                 lost_pkg_attempts += 1
-
+        logging.debug(f' Client {self.address} ended')
         self.socket.set_timeout(None)
         self.end()
 
@@ -99,4 +99,5 @@ class ServerClientDownload(ServerClient):
                 for seq, chunk in sent_chunks.items():
                     packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
                     self.socket.sendto(self.address, packet)
+        logging.debug(f' Client {self.address} ended')
         self.end()

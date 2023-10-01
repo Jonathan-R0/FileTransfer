@@ -2,7 +2,6 @@ from lib.common.package import InitialHandshakePackage, AckSeqPackage
 from lib.server.server_client import ServerClient
 from lib.common.config import (
     RECEPTION_TIMEOUT,
-    # MAX_ATTEMPTS,
     NORMAL_PACKAGE_SIZE,
     NORMAL_PACKAGE_FORMAT,
     WINDOW_SIZE
@@ -32,13 +31,12 @@ class ServerClientUpload(ServerClient):
         self.socket.set_timeout(None)
         self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
 
-    def sw_upload(self, raw_data: bytes, address) -> None:
+    def sw_upload(self, raw_data: bytes, address: tuple) -> None:
         end = False
         last_seq = 0
 
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         while True:
-            # Recieve data
             try:
                 if last_seq > 0:
                     raw_data, \

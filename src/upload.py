@@ -108,7 +108,8 @@ def sr_client_upload(
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
             if not end:
-                logging.debug('Timeout occurred. Resending unacknowledged chunks.')
+                logging.debug('Timeout occurred. Resending ' +
+                              'unacknowledged chunks.')
                 for seq, chunk in sent_chunks.items():
                     packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
                     socket.sendto(address, packet)

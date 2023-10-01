@@ -1,8 +1,13 @@
 from lib.common.package import InitialHandshakePackage
 from lib.server.server_client import ServerClient
 from lib.common.package import AckSeqPackage, NormalPackage
-from lib.common.config import SENDING_TIMEOUT, RECEPTION_TIMEOUT, MAX_ATTEMPTS, ACK_SEQ_SIZE, \
-                              WINDOW_SIZE, NORMAL_PACKAGE_SIZE
+from lib.common.config import (
+    SENDING_TIMEOUT,
+    RECEPTION_TIMEOUT,
+    MAX_ATTEMPTS,
+    ACK_SEQ_SIZE,
+    WINDOW_SIZE,
+)
 import logging
 
 
@@ -22,7 +27,6 @@ class ServerClientDownload(ServerClient):
         else:
             self.create_socket_and_reply_handshake()
             self.sr_download()
-            
 
     def sw_download(self):
         end = False
@@ -44,8 +48,9 @@ class ServerClientDownload(ServerClient):
                 )
                 while True:
                     raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
-                    new_ack, new_seq = AckSeqPackage.unpack_from_client(raw_data)
-                    logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+                    new_ack, new_seq = \
+                        AckSeqPackage.unpack_from_client(raw_data)
+                    logging.debug(f' Recieved ack: {new_ack} & seq: {new_seq}')
                     logging.debug(f' New client: {self.address}')
                     if new_seq == seq == new_ack:
                         lost_pkg_attempts = 0
@@ -105,9 +110,16 @@ class ServerClientDownload(ServerClient):
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
                 if not end:
-                    logging.debug('Timeout occurred. Resending unacknowledged chunks.')
+                    logging.debug('Timeout occurred. Resending ' +
+                                  'unacknowledged chunks.')
                     for seq, chunk in sent_chunks.items():
-                        packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
+                        packet = NormalPackage.pack_to_send(
+                                0,
+                                seq,
+                                chunk,
+                                end,
+                                0
+                            )
                         self.socket.sendto(self.address, packet)
                 else:
                     break

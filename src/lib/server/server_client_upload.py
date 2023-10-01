@@ -96,7 +96,8 @@ class ServerClientUpload(ServerClient):
 
                 # Si no tenia el paquete que me mandaron y esta
                 # dentro de la ventana, lo guardo y mando confirmacion
-                if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
+                if seq not in received_chunks and \
+                        base <= seq < base + WINDOW_SIZE:
                     received_chunks[seq] = data
                     self.socket.sendto(address,
                                        AckSeqPackage.pack_to_send(seq, seq))

@@ -42,7 +42,7 @@ def sr_client_download(socket: SocketWrapper,
             _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                      raw_data)
             logging.debug(f'Received package from: {address} with seq:' +
-                        f' {seq} and end: {end} with len {len(data)}')
+                          f' {seq} and end: {end} with len {len(data)}')
 
             # Si no tenia el paquete que me mandaron y esta
             # dentro de la ventana, lo guardo y mando confirmacion
@@ -54,7 +54,7 @@ def sr_client_download(socket: SocketWrapper,
             elif seq in received_chunks:
                 # Si ya tenia el paquete, mando confirmacion de nuevo
                 socket.sendto(address,
-                            AckSeqPackage.pack_to_send(seq, seq))
+                              AckSeqPackage.pack_to_send(seq, seq))
                 logging.debug(f'Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo
@@ -112,11 +112,16 @@ def sw_client_download(
         except TimeoutError:
             if not end:
                 logging.debug(' A timeout has occurred, ' +
-                            'ending connection and deleting corrupted file')
+                              'ending connection and deleting corrupted file')
                 file_handler.rollback_write()
             break
 
-def handshake_sw(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int) -> tuple[bytes, ...]:
+
+def handshake_sw(
+        socket: SocketWrapper,
+        arg_addr: tuple,
+        handshake_attempts: int
+        ) -> tuple[bytes, ...]:
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,
@@ -138,7 +143,12 @@ def handshake_sw(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int
         exit(1)
     return raw_data, address
 
-def handshake_sr(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int) -> None:
+
+def handshake_sr(
+        socket: SocketWrapper,
+        arg_addr: tuple,
+        handshake_attempts: int
+        ) -> None:
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,
@@ -163,7 +173,6 @@ def handshake_sr(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
 
-    
 
 if __name__ == '__main__':
 
@@ -195,7 +204,8 @@ if __name__ == '__main__':
         raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
 
     try:
-        # TODO: si el sw no se ingresa, entrar por defecto al sw (o al sr depende de lo que se quiera)
+        # TODO: si el sw no se ingresa, entrar por defecto al sw (o al
+        # sr depende de lo que se quiera)
         if downloader_args.stop_and_wait:
             sw_client_download(socket, file_handler, raw_data, address)
         else:

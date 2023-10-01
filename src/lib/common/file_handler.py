@@ -18,7 +18,8 @@ class FileHandler:
         self.file.seek((seq - 1) * self.chunk_size)
         chunk = self.file.read(self.chunk_size)
         logging.debug(f' Read chunk {chunk} with size: {len(chunk)}')
-        return chunk, len(chunk) < self.chunk_size or len(self.file.read(self.chunk_size)) == 0
+        return chunk, len(chunk) < self.chunk_size or \
+            len(self.file.read(self.chunk_size)) == 0
 
     def append_chunk(self, chunk: bytes) -> None:
         if len(chunk) == 0:

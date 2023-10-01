@@ -102,4 +102,5 @@ class ServerClientDownload(ServerClient):
                 for seq, chunk in sent_chunks.items():
                     packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
                     self.socket.sendto(self.address, packet)
+        logging.debug(f' Client {self.address} ended')
         self.end()

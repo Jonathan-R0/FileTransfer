@@ -10,23 +10,37 @@
 
 Para obtener la información de ejecución de cada programa se debe utilizar el flag `-h`
 
-### Upload
+## Ejecución del programa
+### Inicializar el servidor
 
-```bash
-python src/upload.py -v -H host -p 8080 -s path -n name
+```python
+python3.10 start-server.py -v -H host -p port -s /database
 ```
 
-### Download
+### Upload file to the server with Stop & Wait
 
-```bash
-python src/download.py -v -H host -p 8080 -d path -n name
+```python
+python3.10 upload.py -v -s /source -n file -H host -p port -sw
 ```
 
-### Server
+### Download file to the server with Stop & Wait
 
-```bash
-python src/start-server.py -v -H host -p 5050 -s path
+```python
+python3.10 download.py -v -d /destination -n file -H host -p port -sw
 ```
+
+### Upload file to the server with Selective Repeat
+
+```python
+python3.10 upload.py -v -s /source -n file -H host -p port -sr
+```
+
+### Download file to the server with Selective Repeat
+
+```python
+python3.10 download.py -v -d /destination -n file -H host -p port -sr
+```
+
 ## Tamaños de Paquete
 
 - Initial Message:

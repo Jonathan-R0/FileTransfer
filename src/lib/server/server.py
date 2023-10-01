@@ -27,6 +27,7 @@ class Server:
         while True:
             try:
                 data, address = self.listen_to_new_connections()
+                self.cleanup_old_clients()
                 logging.debug(' ...')
                 initial_package = InitialHandshakePackage(data)
                 self.clients_lock.acquire()
@@ -49,6 +50,14 @@ class Server:
 
     def listen_to_new_connections(self) -> tuple[bytes, ...]:
         return self.socket_wrapper.recvfrom(NORMAL_PACKAGE_SIZE)
+
+    def cleanup_old_clients(self) -> None:
+        self.clients_lock.acquire()
+        for client in [c[1] for c in self.clients]:
+            if not client.is_alive():
+                self.clients.remove((client.address, client))
+                client.join()
+        self.clients_lock.release()
 
     def push_client(self, client: ServerClient) -> None:
         if len(self.clients) >= MAX_NUMBER_OF_CLIENTS:

@@ -52,5 +52,6 @@ class ServerClient(threading.Thread):
         self.socket.bind("", 0)
 
     def end(self) -> None:
+        logging.debug(f' Ending client thread: {self.address}')
         self.socket.close()
         self.file.close()

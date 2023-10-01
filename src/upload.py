@@ -163,11 +163,10 @@ if __name__ == '__main__':
         exit(1)
 
     try:
-        # TODO: si el sw no se ingresa, entrar por defecto al sw (o al sr depende de lo que se quiera)
         if uploader_args.selective_repeat:
-            sw_client_upload(socket, file_handler, address)
-        else:
             sr_client_upload(socket, file_handler, address)
+        else:
+            sw_client_upload(socket, file_handler, address)
     finally:
         socket.close()
         file_handler.close()

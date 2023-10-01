@@ -15,7 +15,7 @@ def create_common_args(prog: str, description: str) -> argparse.ArgumentParser:
     group.add_argument(
         '-q',
         '--quiet',
-        action='store_false',
+        action='store_true',
         help='decrease output verbosity'
     )
     parser.add_argument('-H', '--host', dest='ADDR', help='server IP address')
@@ -38,7 +38,7 @@ def create_common_args(prog: str, description: str) -> argparse.ArgumentParser:
     group.add_argument(
         '-sr',
         '--selective_repeat',
-        action='store_false',
+        action='store_true',
         help='selective repeat protocol'
     )
     return parser

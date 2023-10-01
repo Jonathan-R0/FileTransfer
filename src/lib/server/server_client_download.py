@@ -16,8 +16,13 @@ class ServerClientDownload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def run(self) -> None:
-        self.create_socket()
-        self.sw_download() if self.is_saw else self.sr_download()
+        if self.is_saw:
+            self.create_socket()
+            self.sw_download()
+        else:
+            self.create_socket_and_reply_handshake()
+            self.sr_download()
+            
 
     def sw_download(self):
         end = False

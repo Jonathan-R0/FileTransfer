@@ -11,6 +11,7 @@ from lib.common.config import (
     NORMAL_PACKAGE_FORMAT,
     RECEPTION_TIMEOUT,
     WINDOW_SIZE,
+    ACK_SEQ_SIZE,
     MAX_ATTEMPTS
 )
 from lib.common.file_handler import FileHandler
@@ -104,6 +105,54 @@ def sw_client_download(
                 file_handler.rollback_write()
             break
 
+def handshake_sw(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int) -> tuple[bytes, ...]:
+    while handshake_attempts < MAX_ATTEMPTS:
+        try:
+            socket.sendto(arg_addr,
+                          InitialHandshakePackage.pack_to_send(
+                            0,
+                            1,
+                            0,
+                            downloader_args.FILENAME)
+                          )
+            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+            if comp_host(address[0], arg_addr[0]):
+                break
+        except TimeoutError:
+            handshake_attempts += 1
+            logging.debug(f' Handshake attempt {handshake_attempts} ' +
+                          f'to {arg_addr} failed')
+    if handshake_attempts == MAX_ATTEMPTS:
+        logging.debug(f' Handshake to {arg_addr} failed')
+        exit(1)
+    return raw_data, address
+
+def handshake_sr(socket: SocketWrapper, arg_addr: tuple, handshake_attempts: int) -> None:
+    while handshake_attempts < MAX_ATTEMPTS:
+        try:
+            socket.sendto(arg_addr,
+                          InitialHandshakePackage.pack_to_send(
+                            0,
+                            0,
+                            0,
+                            downloader_args.FILENAME)
+                          )
+            raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
+            ack, seq = AckSeqPackage.unpack_from_client(raw_data)
+            logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
+            if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
+                break
+            else:
+                handshake_attempts += 1
+        except TimeoutError:
+            handshake_attempts += 1
+            logging.debug(f' Handshake attempt {handshake_attempts} ' +
+                          f'to {arg_addr} failed')
+    if handshake_attempts == MAX_ATTEMPTS:
+        logging.debug(f' Handshake to {arg_addr} failed')
+        exit(1)
+
+    
 
 if __name__ == '__main__':
 
@@ -129,28 +178,10 @@ if __name__ == '__main__':
     handshake_attempts = 0
     arg_addr = (downloader_args.ADDR, downloader_args.PORT)
     address = None
-    while handshake_attempts < MAX_ATTEMPTS:
-        try:
-            socket.sendto(arg_addr,
-                          InitialHandshakePackage.pack_to_send(
-                            0,
-                            1,
-                            0,
-                            downloader_args.FILENAME)
-                          )
-            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            # ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-            # logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
-            if comp_host(address[0], arg_addr[0]):
-                break
-        except TimeoutError:
-            handshake_attempts += 1
-            logging.debug(f' Handshake attempt {handshake_attempts} ' +
-                          f'to {arg_addr} failed')
-
-    if handshake_attempts == MAX_ATTEMPTS:
-        logging.debug(f' Handshake to {arg_addr} failed')
-        exit(1)
+    if downloader_args.selective_repeat:
+        handshake_sr(socket, arg_addr, handshake_attempts)
+    else:
+        raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
 
     try:
         # TODO: si el sw no se ingresa, entrar por defecto al sw (o al sr depende de lo que se quiera)

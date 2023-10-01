@@ -56,7 +56,6 @@ class Server:
             return
         if client.address not in {c[0] for c in self.clients}:
             self.clients.append((client.address, client))
-            logging.debug(f' New client: {client.address}')
             client.start()
 
     def end(self) -> None:

@@ -19,28 +19,30 @@ class ServerClientUpload(ServerClient):
             dirpath: str
             ):
         super().__init__(initial_package, address, dirpath)
-
-    def run(self) -> None:
-        # Definitivooo, 80% seguro que aca se encuentra el error de la muertee
-        # Problema? hay que cambiar el formato de los paquetes :C
-        # Explicacion: si el ack del handshake se pierde, el servidor
-        # no lo vuelve a mandar. Sin embargo, el paquete que hay que escuchar
-        # puede ser o un ack o un paquete normal. Se necesita
-        # un formato que permita diferenciarlos
+        
+    def start(self) -> None:
         self.create_socket_and_reply_handshake()
-        # self.sw_upload() if self.is_saw else
-        self.sr_upload()
-
-    def sw_upload(self) -> None:
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        try:
+            raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+        except TimeoutError:
+                self.end()
+                return
+        logging.debug(f' New client: {address}')
+        self.socket.set_timeout(None)
+        self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
+        # self.sr_upload()
+        
+    def sw_upload(self, raw_data: bytes, address) -> None:
         end = False
         last_seq = 0
 
-        # lost_pkg_attempts = 0
         self.socket.set_timeout(RECEPTION_TIMEOUT)
-        while not end:  # and lost_pkg_attempts < MAX_ATTEMPTS:
+        while True:
             # Recieve data
             try:
-                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                if last_seq > 0:
+                    raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                          raw_data)
                 logging.debug(
@@ -59,7 +61,6 @@ class ServerClientUpload(ServerClient):
                         address,
                         AckSeqPackage.pack_to_send(seq, seq)
                     )
-                    # lost_pkg_attempts = 0
                 else:
                     logging.debug(
                         f' Recieved package from: {address} with seq: ' +
@@ -69,21 +70,13 @@ class ServerClientUpload(ServerClient):
                         address,
                         AckSeqPackage.pack_to_send(last_seq, last_seq)
                     )
-
             except TimeoutError:
-                # logging.debug(' A timeout has occurred,
-                # no package was recieved')
-                logging.debug(' A timeout has occurred, ' +
-                              'ending connection and deleting corrupted file')
-                self.file.rollback_write()
+                if not end:
+                    logging.debug(' A timeout has occurred, ' +
+                                'ending connection and deleting corrupted file')
+                    self.file.rollback_write()
                 break
-                ''' lost_pkg_attempts += 1
-                if lost_pkg_attempts == MAX_ATTEMPTS and not end:
-                    logging.debug(' Max attempts reached, ending connection ' +
-                                  'and deleting corrupted file')
-                    self.file.rollback_write() '''
-
-        self.socket.set_timeout(None)
+        logging.debug(f' Client {self.address} ended')
         self.end()
 
     def sr_upload(self) -> None:
@@ -119,5 +112,5 @@ class ServerClientUpload(ServerClient):
             # Si recibi el ultimo paquete, termino al toque roque
             if end:
                 break
-
+        logging.debug(f' Client {self.address} ended')
         self.end()

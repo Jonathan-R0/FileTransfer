@@ -62,6 +62,7 @@ def sr_client_download(socket: SocketWrapper,
                 received_chunk = received_chunks.pop(base)
                 file_handler.append_chunk(received_chunk)
                 base += 1
+                attempts = 0
             # Si recibi el ultimo paquete, termino al toque roque
             if end:
                 break

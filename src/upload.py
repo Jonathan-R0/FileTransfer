@@ -98,6 +98,7 @@ def sr_client_upload(
 
             # si el ACK esta en los que mande, lo saco de la lista
             if seq in sent_chunks:
+                attempts = 0
                 del sent_chunks[seq]
 
             # Como recibi un ACK, muevo la ventana

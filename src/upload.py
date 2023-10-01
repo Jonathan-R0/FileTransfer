@@ -145,7 +145,6 @@ if __name__ == '__main__':
     handshake_attempts = 0
     arg_addr = (uploader_args.ADDR, uploader_args.PORT)
     address = None
-    # El error de la muerte se encuentra por aca, en el Handshake
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,

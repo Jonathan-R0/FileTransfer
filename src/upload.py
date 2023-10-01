@@ -53,7 +53,9 @@ def sw_client_upload(
                     break
         except TimeoutError:
             lost_pkg_attempts += 1
+            # logging.debug(f' lost_pkg_attempts: {lost_pkg_attempts}')
             logging.debug(' A timeout has occurred, no ack was recieved')
+            end = False
     logging.debug(f' Client {address} ended')
 
 

@@ -20,7 +20,7 @@ class ServerClientUpload(ServerClient):
             ):
         super().__init__(initial_package, address, dirpath)
 
-    def start(self) -> None:
+    def run(self) -> None:
         self.create_socket_and_reply_handshake()
         self.sw_upload() if self.is_saw else self.sr_upload()
 

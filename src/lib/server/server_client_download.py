@@ -14,7 +14,7 @@ class ServerClientDownload(ServerClient):
             ):
         super().__init__(initial_package, address, dirpath)
 
-    def start(self) -> None:
+    def run(self) -> None:
         self.create_socket_and_reply_handshake()
         self.sw_download() if self.is_saw else self.sr_download()
 

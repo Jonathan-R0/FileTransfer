@@ -7,11 +7,11 @@ from lib.common.package import (
 )
 from lib.common.file_handler import FileHandler
 from lib.common.config import (
+    MAX_ATTEMPTS,
     ACK_SEQ_SIZE,
-    TIMEOUT,
-    WINDOW_SIZE
+    WINDOW_SIZE,
+    SENDING_TIMEOUT
 )
-from lib.client.config import MAX_ATTEMPTS
 import logging
 import os
 
@@ -42,15 +42,15 @@ def sw_client_upload(
                     f' Sending last chunk: {chunk} with size: {len(chunk)}')
             socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
                           chunk, end, 0))
-            raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-            new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-            logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
-            if new_seq == seq == new_ack:
-                lost_pkg_attempts = 0
-                seq += 1
-                ack += 1
-            else:
-                lost_pkg_attempts += 1
+            while True:
+                raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+                new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
+                logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+                if new_seq == seq == new_ack:
+                    lost_pkg_attempts = 0
+                    seq += 1
+                    ack += 1
+                    break
         except TimeoutError:
             lost_pkg_attempts += 1
             logging.debug(' A timeout has occurred, no ack was recieved')
@@ -141,10 +141,11 @@ if __name__ == '__main__':
     # Network Configuration
     socket = SocketWrapper()
     socket.bind("", 0)
-    socket.set_timeout(TIMEOUT)
+    socket.set_timeout(SENDING_TIMEOUT)
     handshake_attempts = 0
     arg_addr = (uploader_args.ADDR, uploader_args.PORT)
     address = None
+    # El error de la muerte se encuentra por aca, en el Handshake
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,

@@ -1,7 +1,7 @@
 from lib.common.package import InitialHandshakePackage, AckSeqPackage
 from lib.server.server_client import ServerClient
 from lib.common.config import (
-    TIMEOUT,
+    RECEPTION_TIMEOUT,
     MAX_ATTEMPTS,
     NORMAL_PACKAGE_SIZE,
     NORMAL_PACKAGE_FORMAT,
@@ -27,9 +27,11 @@ class ServerClientUpload(ServerClient):
     def sw_upload(self) -> None:
         end = False
         last_seq = 0
-        lost_pkg_attempts = 0
-        self.socket.set_timeout(TIMEOUT)
-        while not end and lost_pkg_attempts < MAX_ATTEMPTS:
+
+        #lost_pkg_attempts = 0
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        while not end: #and lost_pkg_attempts < MAX_ATTEMPTS:
+            #Recieve data
             try:
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
@@ -50,7 +52,7 @@ class ServerClientUpload(ServerClient):
                         address,
                         AckSeqPackage.pack_to_send(seq, seq)
                     )
-                    lost_pkg_attempts = 0
+                    #lost_pkg_attempts = 0
                 else:
                     logging.debug(
                         f' Recieved package from: {address} with seq: ' +
@@ -62,8 +64,10 @@ class ServerClientUpload(ServerClient):
                     )
 
             except TimeoutError:
-                logging.debug(' A timeout has occurred, ' +
-                              'no package was recieved')
+                #logging.debug(' A timeout has occurred, no package was recieved')
+                logging.debug(' A timeout has occurred, ending connection and deleting corrupted file')
+                self.file.rollback_write()
+                break
                 lost_pkg_attempts += 1
                 if lost_pkg_attempts == MAX_ATTEMPTS and not end:
                     logging.debug(' Max attempts reached, ending connection ' +

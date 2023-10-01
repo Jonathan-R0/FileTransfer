@@ -10,9 +10,9 @@ from lib.common.config import (
     NORMAL_PACKAGE_SIZE,
     NORMAL_PACKAGE_FORMAT,
     ACK_SEQ_SIZE,
-    TIMEOUT
+    TIMEOUT,
+    MAX_ATTEMPTS
 )
-from lib.client.config import MAX_ATTEMPTS
 from lib.common.file_handler import FileHandler
 import os
 import struct

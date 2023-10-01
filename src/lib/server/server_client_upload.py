@@ -19,7 +19,7 @@ class ServerClientUpload(ServerClient):
             ):
         super().__init__(initial_package, address, dirpath)
 
-    def start(self) -> None:
+    def run(self) -> None:
         self.create_socket_and_reply_handshake()
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         try:

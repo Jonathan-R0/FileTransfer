@@ -28,7 +28,8 @@ class ServerClientUpload(ServerClient):
         # puede ser o un ack o un paquete normal. Se necesita
         # un formato que permita diferenciarlos
         self.create_socket_and_reply_handshake()
-        self.sw_upload() if self.is_saw else self.sr_upload()
+        # self.sw_upload() if self.is_saw else
+        self.sr_upload()
 
     def sw_upload(self) -> None:
         end = False
@@ -86,45 +87,36 @@ class ServerClientUpload(ServerClient):
         self.end()
 
     def sr_upload(self) -> None:
-        received_chunks = {}
         end = False
-        available_seats = WINDOW_SIZE
-        last_seq = 0
-        # a chequear el while!! como en upload.py
-        while not end and available_seats > 0:
+        received_chunks = {}
+        base = 1
+        while not end:
+            # Recibo el paquete
             raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
             _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                      raw_data)
-            logging.debug(
-                    f' Recieved package \n{data}\n from: {address} ' +
-                    f'with seq: {seq} and end: {end} with len {len(data)}'
-                )
-            # if i dont have the package, save it and send ack
-            if seq not in received_chunks:
-                received_chunks[seq] = data
-                self.socket.sendto(
-                    address,
-                    AckSeqPackage.pack_to_send(seq, seq)
-                )
-                logging.debug(
-                    f' Recieved package from: {address} ' +
-                    f'with seq: {seq} and end: {end}'
-                )
-                available_seats -= 1
-            else:
-                # If the package was already received, send the same ack
-                self.socket.sendto(
-                    address,
-                    AckSeqPackage.pack_to_send(seq, seq)
-                )
-            # if the package is next to the first one, write it and add a seat
-            # also, check if there are more packages to write
-            while (last_seq + 1) in received_chunks:
-                last_seq += 1
-                self.file.append_chunk(received_chunks[last_seq])
-                available_seats += 1
-                del received_chunks[last_seq]
+            logging.debug(f'Received package from: {address} with seq:' +
+                          f' {seq} and end: {end} with len {len(data)}')
 
+            # Si no tenia el paquete que me mandaron y esta
+            # dentro de la ventana, lo guardo y mando confirmacion
+            if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
+                received_chunks[seq] = data
+                self.socket.sendto(address,
+                                   AckSeqPackage.pack_to_send(seq, seq))
+                logging.debug(f'Sending ack for seq: {seq}')
+            elif seq in received_chunks:
+                # Si ya tenia el paquete, mando confirmacion de nuevo
+                self.socket.sendto(address,
+                                   AckSeqPackage.pack_to_send(seq, seq))
+                logging.debug(f'Sending ack for seq: {seq}')
+            # Chequeo si el paquete esta en sequencia
+            # y lo agrego al archivo
+            while base in received_chunks:
+                received_chunk = received_chunks.pop(base)
+                self.file.append_chunk(received_chunk)
+                base += 1
+            # Si recibi el ultimo paquete, termino al toque roque
             if end:
                 break
 

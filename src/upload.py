@@ -58,68 +58,54 @@ def sw_client_upload(
     logging.debug(f' Client {address} ended')
 
 
-def resend_missing_chunks(
-        socket: SocketWrapper,
-        address: tuple,
-        sent_chunks: dict[int, bytes]
-        ) -> None:
-    for seq, chunk in sent_chunks.items():
-        socket.sendto(address, NormalPackage.pack_to_send(0, seq, chunk, 0, 1))
-        logging.debug(f' Resending chunk with seq:{seq} and size:{len(chunk)}')
-
-
 def sr_client_upload(
         socket: SocketWrapper,
         file_handler: FileHandler,
         address: tuple
         ) -> None:
     end = False
-    ack = 0
     seq = 1
-    avalable_seats = WINDOW_SIZE
+    next_seq_num = 1
+    base = 1
     sent_chunks = {}
-    # los while habria que revisarlos
-    while not end:
+
+    while not end or sent_chunks:
+
+        # Mando paquetes si tengo espacio en la ventana
+        while next_seq_num < base + WINDOW_SIZE and not end:
+            chunk, end = file_handler.read_next_chunk(next_seq_num)
+
+            if chunk:
+                packet = NormalPackage.pack_to_send(0, next_seq_num, chunk,
+                                                    end, 0)
+                socket.sendto(address, packet)
+                logging.debug(f' Sent chunk {next_seq_num} with size ' +
+                              f'{len(chunk)}')
+
+                # Me guardo el paquete que mande para reenviarlo
+                # si es necesario
+                sent_chunks[next_seq_num] = chunk
+                next_seq_num += 1
+
         try:
-            while avalable_seats > 0:
-                # envio los que entren en mi window
-                chunk, end = file_handler.read_next_chunk(seq)
-                if end or len(chunk) == 0:
-                    logging.debug(
-                        f' Sending last chunk: {chunk} with size:{len(chunk)}')
-                socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
-                              chunk, end, 0))
-                avalable_seats -= 1
-                seq += 1
-                ack += 1
-                sent_chunks[seq] = chunk
-
-                # una vez que envie todos los que entran en mi window ack
-                raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-                new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-                logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
-
-                # si el ack es igual que el menor de todos los que envie
-                # solo ahi libero un asiento
-
-                if new_seq == min(sent_chunks.keys()):
-                    avalable_seats += 1
-                    sent_chunks.pop(min(sent_chunks.keys()))
-
-        # este timeout ocurre cuando dejo de recibir acks
-        except TimeoutError:
-            logging.debug(' A timeout has occurred, no ack was recieved')
-            logging.debug(f' Resending chunks: {sent_chunks}')
-            resend_missing_chunks(socket, address, sent_chunks)
-            # una vez que reenvie todos los chunks que no recibi respuesta
-            # espero un ack
+            # Ahora recibo un ACK
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-            new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-            logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
+            ack, seq = AckSeqPackage.unpack_from_server(raw_data)
+            logging.debug(f' Recieved ack: {ack} and seq: {seq}')
 
-            if new_seq == min(sent_chunks.keys()):
-                avalable_seats += 1
-                sent_chunks.pop(min(sent_chunks.keys()))
+            # si el ACK esta en los que mande, lo saco de la lista
+            if seq in sent_chunks:
+                del sent_chunks[seq]
+
+            # Como recibi un ACK, muevo la ventana
+            base = seq + 1
+
+        except TimeoutError:
+            # Timeout, reenvio todos los paquetes no confirmados
+            logging.debug('Timeout occurred. Resending unacknowledged chunks.')
+            for seq, chunk in sent_chunks.items():
+                packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
+                socket.sendto(address, packet)
 
 
 if __name__ == '__main__':
@@ -138,7 +124,6 @@ if __name__ == '__main__':
         logging.debug(f' File {uploader_args.FILENAME} could not be ' +
                       'opened, generic exception was raised')
         exit(1)
-    
     if file_handler.size() > MAX_FILE_SIZE:
         logging.debug(f' File {uploader_args.FILENAME} is too big')
         exit(1)
@@ -176,7 +161,8 @@ if __name__ == '__main__':
         exit(1)
 
     try:
-        sw_client_upload(socket, file_handler, address)
+        # sw_client_upload(socket, file_handler, address)
+        sr_client_upload(socket, file_handler, address)
         # aca se deberia elegir si sw_upload o sr_upload
     finally:
         socket.close()

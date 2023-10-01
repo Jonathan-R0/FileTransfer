@@ -1,7 +1,10 @@
 import logging
 from threading import Lock
 
-from lib.common.config import NORMAL_PACKAGE_SIZE
+from lib.common.config import (
+    NORMAL_PACKAGE_SIZE,
+    MAX_NUMBER_OF_CLIENTS
+)
 from lib.common.package import InitialHandshakePackage
 from lib.common.socket_wrapper import SocketWrapper
 from lib.server.server_client import ServerClient
@@ -48,6 +51,9 @@ class Server:
         return self.socket_wrapper.recvfrom(NORMAL_PACKAGE_SIZE)
 
     def push_client(self, client: ServerClient) -> None:
+        if len(self.clients) >= MAX_NUMBER_OF_CLIENTS:
+            logging.debug(' Max number of clients reached')
+            return
         if client.address not in {c[0] for c in self.clients}:
             self.clients.append((client.address, client))
             logging.debug(f' New client: {client.address}')

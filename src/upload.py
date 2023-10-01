@@ -37,7 +37,7 @@ def sw_client_upload(
     while not end and lost_pkg_attempts < MAX_ATTEMPTS:
         try:
             chunk, end = file_handler.read_next_chunk(seq)
-            if end or len(chunk) == 0:
+            if end:
                 logging.debug(
                     f' Sending last chunk: {chunk} with size: {len(chunk)}')
             socket.sendto(address, NormalPackage.pack_to_send(ack, seq,

@@ -10,7 +10,8 @@ from lib.common.config import (
     MAX_ATTEMPTS,
     ACK_SEQ_SIZE,
     WINDOW_SIZE,
-    SENDING_TIMEOUT
+    SENDING_TIMEOUT,
+    MAX_FILE_SIZE
 )
 import logging
 import os
@@ -136,6 +137,10 @@ if __name__ == '__main__':
     except Exception:
         logging.debug(f' File {uploader_args.FILENAME} could not be ' +
                       'opened, generic exception was raised')
+        exit(1)
+    
+    if file_handler.size() > MAX_FILE_SIZE:
+        logging.debug(f' File {uploader_args.FILENAME} is too big')
         exit(1)
 
     # Network Configuration

@@ -31,7 +31,6 @@ class ServerClientUpload(ServerClient):
         logging.debug(f' New client: {address}')
         self.socket.set_timeout(None)
         self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
-        # self.sr_upload()
         
     def sw_upload(self, raw_data: bytes, address) -> None:
         end = False

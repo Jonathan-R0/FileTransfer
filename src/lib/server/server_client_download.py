@@ -17,8 +17,7 @@ class ServerClientDownload(ServerClient):
 
     def run(self) -> None:
         self.create_socket_and_reply_handshake()
-        # self.sw_download() if self.is_saw else
-        self.sr_download()
+        self.sw_download() if self.is_saw else self.sr_download()
 
     def sw_download(self):
         end = False

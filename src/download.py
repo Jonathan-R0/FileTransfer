@@ -147,9 +147,11 @@ if __name__ == '__main__':
         exit(1)
 
     try:
-        # sw_client_download(socket, file_handler)
-        sr_client_download(socket, file_handler)
-        # aca se deberia elegir si sw_download o sr_download
+        # TODO: si el sw no se ingresa, entrar por defecto al sw (o al sr depende de lo que se quiera)
+        if downloader_args.stop_and_wait:
+            sw_client_download(socket, file_handler)
+        else:
+            sr_client_download(socket, file_handler)
     finally:
         file_handler.close()
         socket.close()

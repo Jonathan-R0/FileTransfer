@@ -53,7 +53,7 @@ class ServerClientDownload(ServerClient):
                         ack += 1
                         break
             except TimeoutError:
-                if (ack == 0) :
+                if (ack == 0):
                     self.end()
                     return
                 lost_pkg_attempts += 1
@@ -68,9 +68,9 @@ class ServerClientDownload(ServerClient):
         next_seq_num = 1
         base = 1
         sent_chunks = {}
-
-        while not end or sent_chunks:
-
+        attempts = 0
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        while not end or sent_chunks or attempts <= MAX_ATTEMPTS:
             # Mando paquetes si tengo espacio en la ventana
             while next_seq_num < base + WINDOW_SIZE and not end:
                 chunk, end = self.file.read_next_chunk(next_seq_num)
@@ -102,10 +102,14 @@ class ServerClientDownload(ServerClient):
 
             except TimeoutError:
                 # Timeout, reenvio todos los paquetes no confirmados
-                logging.debug('Timeout occurred. Resending ' +
-                              'unacknowledged chunks.')
-                for seq, chunk in sent_chunks.items():
-                    packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
-                    self.socket.sendto(self.address, packet)
+                attempts += 1
+                if not end:
+                    logging.debug('Timeout occurred. Resending unacknowledged chunks.')
+                    for seq, chunk in sent_chunks.items():
+                        packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
+                        self.socket.sendto(self.address, packet)
+                else:
+                    break
+
         logging.debug(f' Client {self.address} ended')
         self.end()

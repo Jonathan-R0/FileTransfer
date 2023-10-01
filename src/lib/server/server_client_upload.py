@@ -4,6 +4,7 @@ from lib.common.config import (
     RECEPTION_TIMEOUT,
     NORMAL_PACKAGE_SIZE,
     NORMAL_PACKAGE_FORMAT,
+    MAX_ATTEMPTS,
     WINDOW_SIZE
 )
 import logging
@@ -82,34 +83,44 @@ class ServerClientUpload(ServerClient):
         end = False
         received_chunks = {}
         base = 1
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        attempts = 0
         while not end:
-            # Recibo el paquete
-            raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                     raw_data)
-            logging.debug(f'Received package from: {address} with seq:' +
-                          f' {seq} and end: {end} with len {len(data)}')
+            try:
+                # Recibo el paquete
+                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
+                                                         raw_data)
+                logging.debug(f'Received package from: {address} with seq:' +
+                              f' {seq} and end: {end} with len {len(data)}')
 
-            # Si no tenia el paquete que me mandaron y esta
-            # dentro de la ventana, lo guardo y mando confirmacion
-            if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
-                received_chunks[seq] = data
-                self.socket.sendto(address,
-                                   AckSeqPackage.pack_to_send(seq, seq))
-                logging.debug(f'Sending ack for seq: {seq}')
-            elif seq in received_chunks:
-                # Si ya tenia el paquete, mando confirmacion de nuevo
-                self.socket.sendto(address,
-                                   AckSeqPackage.pack_to_send(seq, seq))
-                logging.debug(f'Sending ack for seq: {seq}')
-            # Chequeo si el paquete esta en sequencia
-            # y lo agrego al archivo
-            while base in received_chunks:
-                received_chunk = received_chunks.pop(base)
-                self.file.append_chunk(received_chunk)
-                base += 1
-            # Si recibi el ultimo paquete, termino al toque roque
-            if end:
-                break
+                # Si no tenia el paquete que me mandaron y esta
+                # dentro de la ventana, lo guardo y mando confirmacion
+                if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
+                    received_chunks[seq] = data
+                    self.socket.sendto(address,
+                                       AckSeqPackage.pack_to_send(seq, seq))
+                    logging.debug(f'Sending ack for seq: {seq}')
+                elif seq in received_chunks:
+                    # Si ya tenia el paquete, mando confirmacion de nuevo
+                    self.socket.sendto(address,
+                                       AckSeqPackage.pack_to_send(seq, seq))
+                    logging.debug(f'Sending ack for seq: {seq}')
+                # Chequeo si el paquete esta en sequencia
+                # y lo agrego al archivo
+                while base in received_chunks:
+                    received_chunk = received_chunks.pop(base)
+                    self.file.append_chunk(received_chunk)
+                    base += 1
+                # Si recibi el ultimo paquete, termino al toque roque
+                if end:
+                    break
+            except TimeoutError:
+                if attempts == MAX_ATTEMPTS:
+                    logging.debug(' A timeout has occurred, ' +
+                                  'ending connection')
+                    break
+                attempts += 1
+                continue
         logging.debug(f' Client {self.address} ended')
         self.end()

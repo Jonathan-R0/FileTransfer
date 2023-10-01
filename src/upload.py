@@ -11,6 +11,7 @@ from lib.common.config import (
     ACK_SEQ_SIZE,
     WINDOW_SIZE,
     SENDING_TIMEOUT,
+    RECEPTION_TIMEOUT,
     MAX_FILE_SIZE
 )
 import logging
@@ -70,9 +71,9 @@ def sr_client_upload(
     next_seq_num = 1
     base = 1
     sent_chunks = {}
-
-    while not end or sent_chunks:
-
+    socket.set_timeout(RECEPTION_TIMEOUT)
+    attempts = 0
+    while not end or sent_chunks or attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
             chunk, end = file_handler.read_next_chunk(next_seq_num)
@@ -104,10 +105,15 @@ def sr_client_upload(
 
         except TimeoutError:
             # Timeout, reenvio todos los paquetes no confirmados
-            logging.debug('Timeout occurred. Resending unacknowledged chunks.')
-            for seq, chunk in sent_chunks.items():
-                packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
-                socket.sendto(address, packet)
+            attempts += 1
+            if not end:
+                logging.debug('Timeout occurred. Resending unacknowledged chunks.')
+                for seq, chunk in sent_chunks.items():
+                    packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
+                    socket.sendto(address, packet)
+            else:
+                break
+    logging.debug(f' Client {address} ended')
 
 
 if __name__ == '__main__':

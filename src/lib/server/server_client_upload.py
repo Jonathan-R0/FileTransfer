@@ -21,15 +21,18 @@ class ServerClientUpload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def start(self) -> None:
-        # Definitivooo, 80% seguro que aca se encuentra el error de la muertee
-        # Problema? hay que cambiar el formato de los paquetes :C
-        # Explicacion: si el ack del handshake se pierde, el servidor no lo vuelve a mandar
-        # Sin embargo, el paquete que hay que escuchar puede ser o un ack o un paquete normal
-        # Se necesita un formato que permita diferenciarlos
         self.create_socket_and_reply_handshake()
-        self.sw_upload() if self.is_saw else self.sr_upload()
-
-    def sw_upload(self) -> None:
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        try:
+            raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+        except TimeoutError:
+                self.end()
+                return
+        logging.debug(f' New client: {address}')
+        self.socket.set_timeout(None)
+        self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
+        
+    def sw_upload(self, raw_data: bytes, address) -> None:
         end = False
         last_seq = 0
 
@@ -38,7 +41,8 @@ class ServerClientUpload(ServerClient):
         while not end:  # and lost_pkg_attempts < MAX_ATTEMPTS:
             # Recieve data
             try:
-                raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
+                if last_seq > 0:
+                    raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                          raw_data)
                 logging.debug(

@@ -45,7 +45,6 @@ class Server:
     def push_client(self, client: ServerClient) -> None:
         if client.address not in self.clients:
             self.clients.append(client)
-            logging.debug(f' New client: {client.address}')
             client.start()
 
     def end(self) -> None:

@@ -1,2 +1,0 @@
-class ServerSelectiveRepeat:
-    pass

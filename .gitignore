@@ -161,3 +161,8 @@ cython_debug/
 .vscode
 
 .idea
+
+/clientmedia/hasbu.jpeg
+/clientmedia/dataxd
+
+/servermedia/bicho.jpg

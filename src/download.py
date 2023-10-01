@@ -11,6 +11,7 @@ from lib.common.config import (
     NORMAL_PACKAGE_FORMAT,
     ACK_SEQ_SIZE,
     TIMEOUT,
+    WINDOW_SIZE,
     MAX_ATTEMPTS
 )
 from lib.common.file_handler import FileHandler
@@ -25,6 +26,42 @@ def comp_host(host1: str, host2: str) -> bool:
     local_host_addr = {'localhost', '127.0.0.1'}
     return host1 == host2 or\
         (host1 in local_host_addr and host2 in local_host_addr)
+
+
+def sr_client_download(socket: SocketWrapper,
+                       file_handler: FileHandler) -> None:
+    end = False
+    received_chunks = {}
+    base = 1
+    while not end:
+        # Recibo el paquete
+        raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+        _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
+                                                 raw_data)
+        logging.debug(f'Received package from: {address} with seq:' +
+                      f' {seq} and end: {end} with len {len(data)}')
+
+        # Si no tenia el paquete que me mandaron y esta
+        # dentro de la ventana, lo guardo y mando confirmacion
+        if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
+            received_chunks[seq] = data
+            socket.sendto(address,
+                          AckSeqPackage.pack_to_send(seq, seq))
+            logging.debug(f'Sending ack for seq: {seq}')
+        elif seq in received_chunks:
+            # Si ya tenia el paquete, mando confirmacion de nuevo
+            socket.sendto(address,
+                          AckSeqPackage.pack_to_send(seq, seq))
+            logging.debug(f'Sending ack for seq: {seq}')
+        # Chequeo si el paquete esta en sequencia
+        # y lo agrego al archivo
+        while base in received_chunks:
+            received_chunk = received_chunks.pop(base)
+            file_handler.append_chunk(received_chunk)
+            base += 1
+        # Si recibi el ultimo paquete, termino al toque roque
+        if end:
+            break
 
 
 def sw_client_download(
@@ -64,7 +101,18 @@ if __name__ == '__main__':
 
     # File System Configuration
     path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
-    file_handler = FileHandler(open(file=path, mode='wb'))
+    try:
+        file_handler = FileHandler(open(file=path, mode='wb'))
+    except FileNotFoundError:
+        logging.debug(f' File {downloader_args.FILENAME} not found')
+        exit(1)
+    except OSError:
+        logging.debug(f' File {downloader_args.FILENAME} could not be opened')
+        exit(1)
+    except Exception:
+        logging.debug(f' File {downloader_args.FILENAME} could not be ' +
+                      'opened, generic exception was raised')
+        exit(1)
 
     # Network Configuration
     socket = SocketWrapper()
@@ -99,7 +147,8 @@ if __name__ == '__main__':
         exit(1)
 
     try:
-        sw_client_download(socket, file_handler)
+        # sw_client_download(socket, file_handler)
+        sr_client_download(socket, file_handler)
         # aca se deberia elegir si sw_download o sr_download
     finally:
         file_handler.close()

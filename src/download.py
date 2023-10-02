@@ -38,7 +38,7 @@ def sr_client_download(socket: SocketWrapper,
     while attempts <= MAX_ATTEMPTS:
         try:
             # Recibo el paquete
-            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)   
+            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                      raw_data)
             logging.debug(f'Received package from: {address} with seq:' +

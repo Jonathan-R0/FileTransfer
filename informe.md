@@ -17,24 +17,26 @@ El propósito del presente trabajo práctico consiste en desarrollar una aplicac
 
 Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuentran en la misma red local. Esto es, que el cliente y el servidor se encuentran en la misma subred y que no hay routers entre ellos. Esto es importante ya que si hubiera routers entre ellos, el cliente no podría enviarle un mensaje al servidor ya que este no se encuentra en la misma subred.
 
-1. No se pueden realizar descargas de archivos que no existen en el servidor o que esten siendo utilizados por otro cliente.
+1. No se pueden realizar descargas de archivos que no existen en el servidor o que esten siendo utilizados por otro cliente (escritura).
 
-2. Si se carga/descarga un archivo con un nombre que ya existe en el servidor, este será reemplazado por el nuevo archivo.
+2. Si se carga un archivo con un nombre que ya existe en el servidor, este será reemplazado por el nuevo archivo.
 
-3. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
+3. Si en el cliente se encuentra un archivo y se quiere descargar del servidor un archivo con el mismo nombre, se pisa el archivo en el cliente.
 
-4. El tamaño máximo que puede tener un archivo es de 50mb.
+4. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
 
-5. Los paquetes tienen un tamaño de:
+5. El tamaño máximo que puede tener un archivo es de 50mb.
+
+6. Los paquetes tienen un tamaño de:
     a. Initial Message: 262 bytes
     b. ACK-SEQ Package: 8 bytes
     c. Data Package: 269 bytes
 
-6. El tamaño de la ventana para selective repeat es de 10 paquetes.
+7. El tamaño de la ventana para selective repeat es de 10 paquetes.
 
-7. El tamaño máximo del nombre de un archivo es de 256 bytes.
+8. El tamaño máximo del nombre de un archivo es de 256 bytes.
 
-8. Se pueden tener hasta 100 clientes
+9. Se pueden tener hasta 100 clientes.
 
 ## **Implementacion**
 

@@ -33,7 +33,10 @@ class FileHandler:
         return self.len
 
     def rollback_write(self) -> None:
-        os.remove(self.file.name)
+        try:
+            os.remove(self.file.name)
+        except FileNotFoundError:
+            pass
 
     def close(self):
         self.file.close()

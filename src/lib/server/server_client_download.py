@@ -74,13 +74,16 @@ class ServerClientDownload(ServerClient):
         base = 1
         sent_chunks = {}
         attempts = 0
+        seq_end = 0
         self.socket.set_timeout(RECEPTION_TIMEOUT)
-        while not end or sent_chunks or attempts <= MAX_ATTEMPTS:
+        while sent_chunks or attempts <= MAX_ATTEMPTS:
             # Mando paquetes si tengo espacio en la ventana
             while next_seq_num < base + WINDOW_SIZE and not end:
                 chunk, end = self.file.read_next_chunk(next_seq_num)
+                if end:
+                    seq_end = next_seq_num
 
-                if chunk or end:
+                if chunk or end or not len(chunk) == 0:
                     packet = NormalPackage.pack_to_send(0, next_seq_num, chunk,
                                                         end, 0)
                     self.socket.sendto(self.address, packet)
@@ -109,10 +112,15 @@ class ServerClientDownload(ServerClient):
             except TimeoutError:
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
-                if not end:
+                print(sent_chunks.keys())
+                if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                     logging.debug('Timeout occurred. Resending ' +
                                   'unacknowledged chunks.')
                     for seq, chunk in sent_chunks.items():
+                        if seq == seq_end:
+                            end = True
+                        else:
+                            end = False
                         packet = NormalPackage.pack_to_send(
                                 0,
                                 seq,

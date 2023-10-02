@@ -73,12 +73,15 @@ def sr_client_upload(
     sent_chunks = {}
     socket.set_timeout(RECEPTION_TIMEOUT)
     attempts = 0
-    while not end or sent_chunks or attempts <= MAX_ATTEMPTS:
+    seq_end = 0
+    while sent_chunks or attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
             chunk, end = file_handler.read_next_chunk(next_seq_num)
+            if end:
+                seq_end = next_seq_num
 
-            if chunk:
+            if chunk or end or not len(chunk) == 0:
                 packet = NormalPackage.pack_to_send(0, next_seq_num, chunk,
                                                     end, 0)
                 socket.sendto(address, packet)
@@ -107,10 +110,15 @@ def sr_client_upload(
         except TimeoutError:
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
-            if not end:
+            if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                 logging.debug('Timeout occurred. Resending ' +
                               'unacknowledged chunks.')
+                print(sent_chunks.keys())
                 for seq, chunk in sent_chunks.items():
+                    if seq == seq_end:
+                        end = True
+                    else:
+                        end = False
                     packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
                     socket.sendto(address, packet)
             else:
@@ -146,12 +154,16 @@ if __name__ == '__main__':
     handshake_attempts = 0
     arg_addr = (uploader_args.ADDR, uploader_args.PORT)
     address = None
+    if uploader_args.selective_repeat:
+        mode = 0
+    else:
+        mode = 1
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,
                           InitialHandshakePackage.pack_to_send(
                             1,
-                            1,
+                            mode,
                             file_handler.size(),
                             uploader_args.FILENAME)
                           )
@@ -170,7 +182,6 @@ if __name__ == '__main__':
     if handshake_attempts == MAX_ATTEMPTS:
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
-
     try:
         if uploader_args.selective_repeat:
             sr_client_upload(socket, file_handler, address)

@@ -35,10 +35,10 @@ def sr_client_download(socket: SocketWrapper,
     base = 1
     attempts = 0
     socket.set_timeout(RECEPTION_TIMEOUT)
-    while not end and attempts <= MAX_ATTEMPTS:
+    while attempts <= MAX_ATTEMPTS:
         try:
             # Recibo el paquete
-            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)   
             _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
                                                      raw_data)
             logging.debug(f'Received package from: {address} with seq:' +
@@ -56,15 +56,20 @@ def sr_client_download(socket: SocketWrapper,
                 socket.sendto(address,
                               AckSeqPackage.pack_to_send(seq, seq))
                 logging.debug(f'Sending ack for seq: {seq}')
+            elif seq < base:
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+                logging.debug(f'Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo
             while base in received_chunks:
-                received_chunk = received_chunks.pop(base)
+                received_chunk = received_chunks[base]
+                del received_chunks[base]
                 file_handler.append_chunk(received_chunk)
                 base += 1
                 attempts = 0
             # Si recibi el ultimo paquete, termino al toque roque
-            if end:
+            print(received_chunks.keys())
+            if end and len(received_chunks) == 0:
                 break
         except TimeoutError:
             if attempts == MAX_ATTEMPTS:
@@ -73,6 +78,7 @@ def sr_client_download(socket: SocketWrapper,
                 break
             attempts += 1
             continue
+    logging.debug(f' Client {address} ended')
 
 
 def sw_client_download(

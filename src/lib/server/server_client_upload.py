@@ -35,7 +35,6 @@ class ServerClientUpload(ServerClient):
     def sw_upload(self, raw_data: bytes, address: tuple) -> None:
         end = False
         last_seq = 0
-
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         while True:
             try:
@@ -65,10 +64,6 @@ class ServerClientUpload(ServerClient):
                         f' Recieved package from: {address} with seq: ' +
                         f'{seq} and end: {end} but missed previous package'
                     )
-                    self.socket.sendto(
-                        address,
-                        AckSeqPackage.pack_to_send(last_seq, last_seq)
-                    )
             except TimeoutError:
                 if not end:
                     logging.debug(' A timeout has occurred, ' +
@@ -83,7 +78,7 @@ class ServerClientUpload(ServerClient):
         end = False
         received_chunks = {}
         base = 1
-        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        self.socket.set_timeout(RECEPTION_TIMEOUT + 2.0)
         attempts = 0
         while not end:
             try:
@@ -107,15 +102,19 @@ class ServerClientUpload(ServerClient):
                     self.socket.sendto(address,
                                        AckSeqPackage.pack_to_send(seq, seq))
                     logging.debug(f'Sending ack for seq: {seq}')
+                elif seq < base:
+                    self.socket.sendto(self.address, AckSeqPackage.pack_to_send(seq, seq))
+                    logging.debug(f'Sending ack for seq: {seq}')
                 # Chequeo si el paquete esta en sequencia
                 # y lo agrego al archivo
                 while base in received_chunks:
-                    received_chunk = received_chunks.pop(base)
+                    received_chunk = received_chunks[base]
+                    del received_chunks[base]
                     self.file.append_chunk(received_chunk)
                     base += 1
                     attempts = 0
                 # Si recibi el ultimo paquete, termino al toque roque
-                if end:
+                if end and len(received_chunks) == 0:
                     break
             except TimeoutError:
                 if attempts == MAX_ATTEMPTS:

@@ -122,8 +122,9 @@ if __name__ == '__main__':
 
     # File System Configuration
     path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
+    print(path)
     try:
-        file_handler = FileHandler(open(file=path, mode='rb'))
+        file_handler = FileHandler(path, True, 'rb')
     except FileNotFoundError:
         logging.debug(f' File {uploader_args.FILENAME} not found')
         exit(1)

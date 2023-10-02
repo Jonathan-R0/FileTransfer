@@ -179,7 +179,7 @@ if __name__ == '__main__':
     # File System Configuration
     path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
     try:
-        file_handler = FileHandler(open(file=path, mode='wb'))
+        file_handler = FileHandler(path, False, 'wb')
     except FileNotFoundError:
         logging.debug(f' File {downloader_args.FILENAME} not found')
         exit(1)

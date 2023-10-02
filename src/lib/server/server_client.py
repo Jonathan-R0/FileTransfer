@@ -24,9 +24,11 @@ class ServerClient(threading.Thread):
             path = os.path.join(dirpath, initial_package.file_name
                                                         .decode()
                                                         .rstrip("\0"))
-            self.file = FileHandler(open(
-                file=path,
-                mode='wb' if initial_package.is_upload else 'rb'))
+            self.file = FileHandler(
+                                    path,
+                                    initial_package.is_upload,
+                                    'wb' if initial_package.is_upload else 'rb'
+                                )
         except FileNotFoundError:
             self.return_error_to_client(404)
         except OSError:

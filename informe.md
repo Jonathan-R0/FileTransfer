@@ -9,21 +9,21 @@
 
 # Informe
 
-## **Introduccion**
+## **Introducción**
 
 El propósito del presente trabajo práctico consiste en desarrollar una aplicación de red dedicada a la transferencia de archivos entre sistemas cliente y servidor. Para alcanzar este fin, resulta esencial comprender los procesos de comunicación en redes, así como el modelo de servicio proporcionado por la capa de transporte a la capa de aplicación. Asimismo, para lograr el objetivo establecido, se adquirirá conocimiento sobre el uso de interfaces de sockets y los principios fundamentales de la transferencia de datos fiable.
 
-## **Hipotesis y suposiciones realizadas**
+## **Hipótesis y suposiciones realizadas**
 
-Para el desarrollo del trabajo se asumio que el cliente y el servidor se encuentran en la misma red local. Esto es, que el cliente y el servidor se encuentran en la misma subred y que no hay routers entre ellos. Esto es importante ya que si hubiera routers entre ellos, el cliente no podria enviarle un mensaje al servidor ya que este no se encuentra en la misma subred.
+Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuentran en la misma red local. Esto es, que el cliente y el servidor se encuentran en la misma subred y que no hay routers entre ellos. Esto es importante ya que si hubiera routers entre ellos, el cliente no podría enviarle un mensaje al servidor ya que este no se encuentra en la misma subred.
 
 1. No se pueden realizar descargas de archivos que no existen en el servidor o que esten siendo utilizados por otro cliente.
 
-2. Si se carga/descarga un archivo con un nombre que ya existe en el servidor, este sera reemplazado por el nuevo archivo.
+2. Si se carga/descarga un archivo con un nombre que ya existe en el servidor, este será reemplazado por el nuevo archivo.
 
-3. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No asi, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
+3. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
 
-4. El tamaño maximo que puede tener un archivo es de 50mb.
+4. El tamaño máximo que puede tener un archivo es de 50mb.
 
 5. Los paquetes tienen un tamaño de:
     a. Initial Message: 262 bytes
@@ -32,7 +32,7 @@ Para el desarrollo del trabajo se asumio que el cliente y el servidor se encuent
 
 6. El tamaño de la ventana para selective repeat es de 10 paquetes.
 
-7. El tamaño maximo del nombre de un archivo es de 256 bytes.
+7. El tamaño máximo del nombre de un archivo es de 256 bytes.
 
 8. Se pueden tener hasta 100 clientes
 
@@ -79,15 +79,15 @@ Es esencial destacar que, aunque reenviar el paquete es una práctica común par
 
 **STOP AND WAIT:**
 
-En nuestra implementación del protocolo Stop and Wait, se utiliza un tamaño de ventana de 1. Esto implica que el cliente está limitado a enviar un único paquete a la vez y debe aguardar la recepción del acknowledgment por parte del servidor antes de poder enviar el siguiente paquete. En caso de que el acknowledgment no llegue dentro de un intervalo de tiempo predefinido, el cliente procede a reenviar el paquete. 
+En nuestra implementación del protocolo Stop and Wait, se utiliza un tamaño de ventana de 1. Esto implica que el emisor está limitado a enviar un único paquete a la vez y debe aguardar la recepción del acknowledgment por parte del receptor antes de poder enviar el siguiente paquete. En caso de que el acknowledgment no llegue dentro de un intervalo de tiempo predefinido, el emisor procede a reenviar el paquete. Si recibe un acknowledgment antiguo, este sera ignorado.
 
-Por otro lado, si el servidor recibe un paquete que no es el esperado, simplemente lo ignora y espera la llegada del paquete correcto antes de responder.
+Por otro lado, si el receptor recibe un paquete que no es el esperado, se reenvia el acknowledgment correspondiente asumiendo que este se perdió en el anterior envio.
 
 **SELECTIVE REPEAT:**
 
-Por otro lado, en la implementación de Selective Repeat, se establece una ventana de tamaño 10 para el envío de paquetes. Esto significa que el cliente tiene la capacidad de enviar hasta 10 paquetes simultáneamente, esperando a que el servidor le envíe los acknowledgments correspondientes. En caso de que el servidor reciba un paquete incorrecto, lo ignora y espera por el paquete correcto. Si el cliente no recibe un acknowledgment dentro del tiempo especificado, reenvía el paquete correspondiente.
+Por otro lado, en la implementación de Selective Repeat, se establece una ventana de tamaño 10 para el envío de paquetes. Esto significa que el cliente tiene la capacidad de enviar hasta 10 paquetes simultáneamente, esperando a que el servidor le envíe los acknowledgments correspondientes. En caso de que el servidor reciba un paquete incorrecto, lo ignora y espera por el paquete correcto. Si el emisor no recibe un acknowledgment dentro del tiempo especificado, reenvía el paquete correspondiente.
 
-En situaciones donde el cliente recibe un paquete duplicado, reenvía el acknowledgment del paquete que ya ha recibido previamente. Si el paquete recibido es el esperado, se almacena para su posterior procesamiento y se emite el acknowledgment correspondiente. Esta implementación permite una gestión eficiente y segura de la transferencia de archivos, garantizando la integridad y la confiabilidad del proceso, ya sea mediante el enfoque de Stop and Wait o Selective Repeat.
+En situaciones donde el receptor recibe un paquete duplicado, reenvía el acknowledgment del paquete que ya ha recibido previamente. Si el paquete recibido es el esperado, se almacena para su posterior procesamiento y se emite el acknowledgment correspondiente. Esta implementación permite una gestión eficiente y segura de la transferencia de archivos, garantizando la integridad y la confiabilidad del proceso, ya sea mediante el enfoque de Stop and Wait o Selective Repeat.
 
 ## Pruebas
 
@@ -97,43 +97,43 @@ ACA van las pruebassssssssssssssssssssssssssssssss XD
 
 ### Arquitectura Cliente Servidor
 
-La arquitectura cliente servidor consiste de tener un proceso ejecutandose constantemente en el servidor la cual recibe requests de otros procesos que se ejecutan en un cliente. El cliente esta preparado para saber comunicarse con el servidor mediante un protocolo preestablecido. El ciclo de vida de interacciones consiste de que se establezca una conexion y el servidor pueda responder las consultas que le realice el proceso cliente
+La arquitectura cliente servidor consiste de tener un proceso ejecutandose constantemente en el servidor la cual recibe requests de otros procesos que se ejecutan en un cliente. El cliente está preparado para saber comunicarse con el servidor mediante un protocolo preestablecido. El ciclo de vida de interacciones consiste de que se establezca una conexión y el servidor pueda responder las consultas que le realice el proceso cliente
 
-### La Funcion de un Protocolo de Capa de Aplicacion
+### La Función de un Protocolo de Capa de Aplicacion
 
-La funcion de un protocolo de capa de aplicacion es comunicar distintos hosts a traves de la red. Establece la comunicacion entre los end hosts. 
+La función de un protocolo de capa de aplicacion es comunicar distintos hosts a traves de la red. Establece la comunicacion entre los end hosts. 
 
 ### Protocolo utilizado
 
-Nuestro protocolo consta de realizar RDT. Primero realizamos un handshake, donde el cliente le envia al host un mensaje inicial y este debe responderle con un acknowledgment.
+Nuestro protocolo consta de realizar una transferencia de datos confiable (RDT). Primero realizamos un handshake, donde el cliente le envia al host un mensaje inicial y este debe responderle con un acknowledgment.
 
-Luego en funcion de la operacion a realizar se ejecuta una parte diferente del proceso.
+Luego en función de la operación a realizar se ejecuta una parte diferente del proceso.
 
 Si estamos haciendo un upload con stop and wait el cliente enviara en un loop chunks del archivo a la vez que, entre cada paquete que envia, estara esperando el acknowledgment del servidor para saber que este llego correctamente. Si se usa el protocolo de selective repeat utilizamos una ventana de $N$ paquetes para hacer mas eficiente la espera de los ack.
 
-En cambio si estamos haciendo un download, es el cliente que espera los paquetes y responde con los acknowledgments. Una explicacion mas detallada del protocolo se encuentra en la seccion de implementacion del informe.
+En cambio si estamos haciendo un download, es el cliente que espera los paquetes y responde con los acknowledgments. Una explicación más detallada del protocolo se encuentra en la seccion de implementacion del informe.
 
 ### Diferencias Entre TCP y UDP
 
-Con respecto a las caracteristicas y servicios que ofrece cada uno, sabemos que UPD provee una comunicacion libre y bidireccional entre procesos. Ademas otro feature que posee es un simple chequeo de errores mediante un checksum. TCP en cambio realiza una transferencia de datos que por default es RDT (reliable data transfer), es decir, los paquetes llegan integros, sin errores, en el orden correcto y sin duplicados. TCP tambien ofrece control de flujo y congestion.
+Con respecto a las características y servicios que ofrece cada uno, sabemos que UPD provee una comunicación libre y bidireccional entre procesos. Ademas otro feature que posee es un simple chequeo de errores mediante un checksum. TCP en cambio realiza una transferencia de datos que por default es RDT (reliable data transfer), es decir, los paquetes llegan integros, sin errores, en el orden correcto y sin duplicados. TCP tambien ofrece control de flujo y congestion.
 
 TCP ademas posee un pequeño delay debido al establecimiento de la conexion RDT con respecto a UDP. 
 
 El header de UDP es de 8 bytes mientras que el header de TCP es de 20 bytes.
 
-UDP es preferible sobre TCP para aplicaciones donde no es un problema importante la perdida poco comun de paquetes. Por ejemplo en servicios de audio o video, donde no molesta perder alguna parte de un frame de una transmision. De lo contrario, si la comunicacion debe ser confiable, se utiliza TCP.
+UDP es preferible sobre TCP para aplicaciones donde no es un problema importante la perdida poco comun de paquetes. Por ejemplo en servicios de audio o video, donde no molesta perder alguna parte de un frame de una transmisión. De lo contrario, si la comunicación debe ser confiable, se utiliza TCP.
 
 ## Dificultades Encontradas
 
 Fue dificil debuggear instancias de problemas relacionadas con la perdida de paquetes. Resulto complicado producto de varios casos borde que no habiamos tenido en cuenta y por la extensa logica empleada en los archivos.
 
-Tambien resulto interesante y no por ello facil, definir la estrucutura de los paquetes. Siempre evitamos agregar datos para que este sea lo mas ligero posible. A veces esto no se podia hacer, por ejemplo con el paquete normal que posee un booleano de finalizacion.
+Tambien resulto interesante y no por ello facil, definir la estrucutura de los paquetes. Siempre evitamos agregar datos para que este sea lo mas ligero posible. A veces esto no se podia hacer, por ejemplo con el paquete normal que posee un booleano de finalización.
 
 Nos resulto finalmente extremadamente complicado dividir las tareas entre los integrantes del grupo, mayoritariamente en el desarrollo inicial del proyecto. Esto, junto con que fuimos tres personas desarrollando el trabajo (dado que nuestro cuarto integrante abandono la materia) dificulto mucho el proceso.
 
 ## Conclusiones
 
-Aprendimos que para el manejo de redes, es util utilizar metodos de ejecucion concurrente pero que deben ser cuidadosamente analizados para evitar crear vulnerabilidades en el host. Por ejemplo, podria pasar que si no verificamos la cantidad de clientes ejecutandose concurrentemente, un atacante podria enviar muchos requests en paralelo, lo cual agotaria los recursos del server producto de que cada thread necesita recursos de la maquina.
+Aprendimos que para el manejo de redes, es útil utilizar metodos de ejecución concurrente pero que deben ser cuidadosamente analizados para evitar crear vulnerabilidades en el host. Por ejemplo, podria pasar que si no verificamos la cantidad de clientes ejecutandose concurrentemente, un atacante podria enviar muchos requests en paralelo, lo cual agotaría los recursos del server producto de que cada thread necesita recursos de la maquina.
 
 Pudimos implementar correctamente los dos protocolos Stop and Wait y Selective Repeat.
 

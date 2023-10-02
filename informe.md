@@ -30,7 +30,7 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 6. Los paquetes tienen un tamaño de:
     a. Initial Message: 262 bytes
     b. ACK-SEQ Package: 8 bytes
-    c. Data Package: 269 bytes
+    c. Data Package: 285 bytes
 
 7. El tamaño de la ventana para selective repeat es de 10 paquetes.
 

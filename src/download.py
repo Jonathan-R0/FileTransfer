@@ -84,7 +84,7 @@ def sw_client_download(
     end = False
     last_seq = 0
     socket.set_timeout(RECEPTION_TIMEOUT)
-    while True:
+    while not end:
         try:
             if last_seq > 0:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
@@ -92,6 +92,8 @@ def sw_client_download(
                 NORMAL_PACKAGE_FORMAT,
                 raw_data
             )
+            if error != 0:
+                break
             logging.debug(f' Recieved package \n{raw_data}\n from: ' +
                           f'{address} with len {len(raw_data)} and end: {end}')
             if seq == last_seq + 1 and ack == last_seq:
@@ -110,11 +112,9 @@ def sw_client_download(
                     AckSeqPackage.pack_to_send(last_seq, last_seq)
                 )
         except TimeoutError:
-            if not end:
-                logging.debug(' A timeout has occurred, ' +
-                              'ending connection and deleting corrupted file')
-                file_handler.rollback_write()
-            break
+            logging.debug(' A timeout has occurred, ' +
+                            'ending connection and deleting corrupted file')
+            file_handler.rollback_write()
 
 
 def handshake_sw(

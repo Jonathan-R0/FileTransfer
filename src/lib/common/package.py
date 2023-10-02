@@ -5,6 +5,8 @@ from lib.common.config import (
     ACK_SEQ_FORMAT,
     NORMAL_PACKAGE_FORMAT,
 )
+from hashlib import md5
+import random
 
 
 class InitialHandshakePackage:
@@ -48,7 +50,8 @@ class NormalPackage:
     @staticmethod
     def pack_to_send(ack: int, seq: int, data: bytes,
                      end: bool, error: int) -> bytes:
-        return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error, data)
+        return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error,
+                           md5(data).digest(), data)
 
     @staticmethod
     def unpack_from_client(data: bytes) -> tuple[Any, ...]:

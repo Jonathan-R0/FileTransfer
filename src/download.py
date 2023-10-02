@@ -4,11 +4,11 @@ from lib.common.socket_wrapper import SocketWrapper
 from lib.common.package import (
     InitialHandshakePackage,
     AckSeqPackage,
+    NormalPackage,
 )
 import logging
 from lib.common.config import (
     NORMAL_PACKAGE_SIZE,
-    NORMAL_PACKAGE_FORMAT,
     RECEPTION_TIMEOUT,
     WINDOW_SIZE,
     ACK_SEQ_SIZE,
@@ -16,7 +16,7 @@ from lib.common.config import (
 )
 from lib.common.file_handler import FileHandler
 import os
-import struct
+from hashlib import md5
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
@@ -38,8 +38,11 @@ def sr_client_download(socket: SocketWrapper,
         try:
             # Recibo el paquete
             raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                     raw_data)
+            _, seq, end, error, checksum, data = NormalPackage.unpack_from_client(raw_data)
+            if any(data) and checksum != md5(data).digest():
+                logging.debug(' Checksum error for package ' +
+                              f'with seq: {seq}. Ignoring...')
+                continue
             logging.debug(f'Received package from: {address} with seq:' +
                           f' {seq} and end: {end} with len {len(data)}')
 
@@ -86,10 +89,11 @@ def sw_client_download(
         try:
             if last_seq > 0:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            ack, seq, end, error, data = struct.unpack(
-                NORMAL_PACKAGE_FORMAT,
-                raw_data
-            )
+            ack, seq, end, error, checksum, data = NormalPackage.unpack_from_client(raw_data)
+            if any(data) and checksum != md5(data).digest():
+                logging.debug(' Checksum error for package ' +
+                              f'with seq: {seq}. Ignoring...')
+                continue
             if error != 0:
                 break
             logging.debug(f' Recieved package \n{raw_data}\n from: ' +

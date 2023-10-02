@@ -1,13 +1,16 @@
-from lib.common.package import InitialHandshakePackage, AckSeqPackage
+from lib.common.package import (
+    InitialHandshakePackage,
+    AckSeqPackage,
+    NormalPackage
+)
 from lib.server.server_client import ServerClient
 from lib.common.config import (
     RECEPTION_TIMEOUT,
     NORMAL_PACKAGE_SIZE,
-    NORMAL_PACKAGE_FORMAT,
     WINDOW_SIZE
 )
 import logging
-import struct
+from hashlib import md5
 
 
 class ServerClientUpload(ServerClient):
@@ -40,8 +43,11 @@ class ServerClientUpload(ServerClient):
                 if last_seq > 0:
                     raw_data, \
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                     raw_data)
+                _, seq, end, _, checksum, data = NormalPackage.unpack_from_client(raw_data)
+                if any(data) and checksum != md5(data).digest():
+                    logging.debug(' Checksum error for package ' +
+                                  f'with seq: {seq}. Ignoring...')
+                    continue
                 logging.debug(
                     f' Recieved package \n{data}\n from: {address} ' +
                     f'with seq: {seq} and end: {end} with len {len(data)}'
@@ -82,8 +88,11 @@ class ServerClientUpload(ServerClient):
             try:
                 # Recibo el paquete
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                     raw_data)
+                _, seq, end, _, checksum, data = NormalPackage.unpack_from_client(raw_data)
+                if any(data) and checksum != md5(data).digest():
+                    logging.debug(' Checksum error for package ' +
+                                  f'with seq: {seq}. Ignoring... {any(data)}')
+                    continue
                 logging.debug(f'Received package from: {address} with seq:' +
                               f' {seq} and end: {end} with len {len(data)}')
 

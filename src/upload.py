@@ -55,7 +55,6 @@ def sw_client_upload(
                     break
         except TimeoutError:
             lost_pkg_attempts += 1
-            # logging.debug(f' lost_pkg_attempts: {lost_pkg_attempts}')
             logging.debug(' A timeout has occurred, no ack was recieved')
             end = False
     logging.debug(f' Client {address} ended')
@@ -71,17 +70,17 @@ def sr_client_upload(
     next_seq_num = 1
     base = 1
     sent_chunks = {}
-    socket.set_timeout(RECEPTION_TIMEOUT)
     attempts = 0
     seq_end = 0
-    while sent_chunks or attempts <= MAX_ATTEMPTS:
+    socket.set_timeout(SENDING_TIMEOUT)
+    while attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
             chunk, end = file_handler.read_next_chunk(next_seq_num)
             if end:
                 seq_end = next_seq_num
 
-            if chunk or end or not len(chunk) == 0:
+            if chunk or end or len(chunk) != 0:
                 packet = NormalPackage.pack_to_send(0, next_seq_num, chunk,
                                                     end, 0)
                 socket.sendto(address, packet)
@@ -96,101 +95,116 @@ def sr_client_upload(
         try:
             # Ahora recibo un ACK
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
+            print(f"sent chunks: {sent_chunks.keys()}")
             ack, seq = AckSeqPackage.unpack_from_server(raw_data)
             logging.debug(f' Recieved ack: {ack} and seq: {seq}')
+
+            # Como recibi un ACK, muevo la ventana
+            chunk_elements = [int(x) for x in sent_chunks.keys()]
+            if seq == min(chunk_elements):
+                if len(chunk_elements) > 1:
+                    base = min(chunk_elements)
+                    print(f"new base: {base}")
+                else:
+                    base = base + WINDOW_SIZE
+                    print(f"new base: {base}")
+                attempts = 0
 
             # si el ACK esta en los que mande, lo saco de la lista
             if seq in sent_chunks:
                 attempts = 0
                 del sent_chunks[seq]
 
-            # Como recibi un ACK, muevo la ventana
-            chunk_elements = [int(x) for x in sent_chunks.keys()]
-            if seq == base:
-                if len(chunk_elements) > 0:
-                    base = min(chunk_elements)
-                    print(f"new base: {base}")
-
-
         except TimeoutError:
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
+            print(f"attempts: {attempts}, chunks: {sent_chunks.keys()}")
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                 logging.debug('Timeout occurred. Resending ' +
-                              'unacknowledged chunks.')
+                                'unacknowledged chunks.')
                 for seq, chunk in sent_chunks.items():
                     if seq == seq_end:
                         end = True
                     else:
                         end = False
-                    packet = NormalPackage.pack_to_send(0, seq, chunk, end, 0)
+                    packet = NormalPackage.pack_to_send(
+                            0,
+                            seq,
+                            chunk,
+                            end,
+                            0
+                        )
                     socket.sendto(address, packet)
             else:
+                print("aca")
                 break
     logging.debug(f' Client {address} ended')
 
 
 if __name__ == '__main__':
-
-    # File System Configuration
-    path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
-    print(path)
     try:
-        file_handler = FileHandler(path, True, 'rb')
-    except FileNotFoundError:
-        logging.debug(f' File {uploader_args.FILENAME} not found')
-        exit(1)
-    except OSError:
-        logging.debug(f' File {uploader_args.FILENAME} could not be opened')
-        exit(1)
-    except Exception:
-        logging.debug(f' File {uploader_args.FILENAME} could not be ' +
-                      'opened, generic exception was raised')
-        exit(1)
-    if file_handler.size() > MAX_FILE_SIZE:
-        logging.debug(f' File {uploader_args.FILENAME} is too big')
-        exit(1)
-
-    # Network Configuration
-    socket = SocketWrapper()
-    socket.bind("", 0)
-    socket.set_timeout(SENDING_TIMEOUT)
-    handshake_attempts = 0
-    arg_addr = (uploader_args.ADDR, uploader_args.PORT)
-    address = None
-    if uploader_args.selective_repeat:
-        mode = 0
-    else:
-        mode = 1
-    while handshake_attempts < MAX_ATTEMPTS:
+        # File System Configuration
+        path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
+        print(path)
         try:
-            socket.sendto(arg_addr,
-                          InitialHandshakePackage.pack_to_send(
-                            1,
-                            mode,
-                            file_handler.size(),
-                            uploader_args.FILENAME)
-                          )
-            raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
-            ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-            logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
-            if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
-                break
-            else:
-                handshake_attempts += 1
-        except TimeoutError:
-            handshake_attempts += 1
-            logging.debug(f' Handshake attempt {handshake_attempts} ' +
-                          f'to {arg_addr} failed')
+            file_handler = FileHandler(path, True, 'rb')
+        except FileNotFoundError:
+            logging.debug(f' File {uploader_args.FILENAME} not found')
+            exit(1)
+        except OSError:
+            logging.debug(f' File {uploader_args.FILENAME} could not be opened')
+            exit(1)
+        except Exception:
+            logging.debug(f' File {uploader_args.FILENAME} could not be ' +
+                        'opened, generic exception was raised')
+            exit(1)
+        if file_handler.size() > MAX_FILE_SIZE:
+            logging.debug(f' File {uploader_args.FILENAME} is too big')
+            exit(1)
 
-    if handshake_attempts == MAX_ATTEMPTS:
-        logging.debug(f' Handshake to {arg_addr} failed')
-        exit(1)
-    try:
+        # Network Configuration
+        socket = SocketWrapper()
+        socket.bind("", 0)
+        socket.set_timeout(SENDING_TIMEOUT)
+        handshake_attempts = 0
+        arg_addr = (uploader_args.ADDR, uploader_args.PORT)
+        address = None
         if uploader_args.selective_repeat:
-            sr_client_upload(socket, file_handler, address)
+            mode = 0
         else:
-            sw_client_upload(socket, file_handler, address)
-    finally:
-        socket.close()
-        file_handler.close()
+            mode = 1
+        while handshake_attempts < MAX_ATTEMPTS:
+            try:
+                socket.sendto(arg_addr,
+                            InitialHandshakePackage.pack_to_send(
+                                1,
+                                mode,
+                                file_handler.size(),
+                                uploader_args.FILENAME)
+                            )
+                raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
+                ack, seq = AckSeqPackage.unpack_from_client(raw_data)
+                logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
+                if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
+                    break
+                else:
+                    handshake_attempts += 1
+            except TimeoutError:
+                handshake_attempts += 1
+                logging.debug(f' Handshake attempt {handshake_attempts} ' +
+                            f'to {arg_addr} failed')
+
+        if handshake_attempts == MAX_ATTEMPTS:
+            logging.debug(f' Handshake to {arg_addr} failed')
+            exit(1)
+        try:
+            if uploader_args.selective_repeat:
+                sr_client_upload(socket, file_handler, address)
+            else:
+                sw_client_upload(socket, file_handler, address)
+        finally:
+            socket.close()
+            file_handler.close()
+    except KeyboardInterrupt:
+        logging.debug(' Keyboard Interrupt, ending connection')
+        exit(1)

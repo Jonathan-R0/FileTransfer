@@ -141,6 +141,5 @@ class ServerClientDownload(ServerClient):
                 else:
                     print("aca")
                     break
-
         logging.debug(f' Client {self.address} ended')
         self.end()

@@ -4,7 +4,6 @@ from lib.common.config import (
     RECEPTION_TIMEOUT,
     NORMAL_PACKAGE_SIZE,
     NORMAL_PACKAGE_FORMAT,
-    MAX_ATTEMPTS,
     WINDOW_SIZE
 )
 import logging
@@ -78,9 +77,8 @@ class ServerClientUpload(ServerClient):
         end = False
         received_chunks = {}
         base = 1
-        self.socket.set_timeout(RECEPTION_TIMEOUT + 2.0)
-        attempts = 0
-        while not end:
+        self.socket.set_timeout(RECEPTION_TIMEOUT)
+        while True:
             try:
                 # Recibo el paquete
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
@@ -113,16 +111,11 @@ class ServerClientUpload(ServerClient):
                     del received_chunks[base]
                     self.file.append_chunk(received_chunk)
                     base += 1
-                    attempts = 0
-                # Si recibi el ultimo paquete, termino al toque roque
-                if end and len(received_chunks) == 0:
-                    break
             except TimeoutError:
-                if attempts == MAX_ATTEMPTS:
+                if not end:
                     logging.debug(' A timeout has occurred, ' +
-                                  'ending connection')
-                    break
-                attempts += 1
-                continue
+                                'ending connection and deleting corrupted file')
+                    self.file_handler.rollback_write()
+                break
         logging.debug(f' Client {self.address} ended')
         self.end()

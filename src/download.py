@@ -82,7 +82,7 @@ def sw_client_download(
     end = False
     last_seq = 0
     socket.set_timeout(RECEPTION_TIMEOUT)
-    while not end:
+    while True:
         try:
             if last_seq > 0:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
@@ -173,39 +173,43 @@ def handshake_sr(
 
 
 if __name__ == '__main__':
-
-    # File System Configuration
-    path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
     try:
-        file_handler = FileHandler(path, False, 'wb')
-    except FileNotFoundError:
-        logging.debug(f' File {downloader_args.FILENAME} not found')
-        exit(1)
-    except OSError:
-        logging.debug(f' File {downloader_args.FILENAME} could not be opened')
-        exit(1)
-    except Exception:
-        logging.debug(f' File {downloader_args.FILENAME} could not be ' +
-                      'opened, generic exception was raised')
-        exit(1)
+        # File System Configuration
+        path = os.path.join(downloader_args.FILEPATH, downloader_args.FILENAME)
+        try:
+            file_handler = FileHandler(path, False, 'wb')
+        except FileNotFoundError:
+            logging.debug(f' File {downloader_args.FILENAME} not found')
+            exit(1)
+        except OSError:
+            logging.debug(f' File {downloader_args.FILENAME} could not be opened')
+            exit(1)
+        except Exception:
+            logging.debug(f' File {downloader_args.FILENAME} could not be ' +
+                        'opened, generic exception was raised')
+            exit(1)
 
-    # Network Configuration
-    socket = SocketWrapper()
-    socket.bind("", 0)
-    socket.set_timeout(RECEPTION_TIMEOUT)
-    handshake_attempts = 0
-    arg_addr = (downloader_args.ADDR, downloader_args.PORT)
-    address = None
-    if downloader_args.selective_repeat:
-        handshake_sr(socket, arg_addr, handshake_attempts)
-    else:
-        raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
-
-    try:
-        if downloader_args.stop_and_wait:
-            sw_client_download(socket, file_handler, raw_data, address)
+        # Network Configuration
+        socket = SocketWrapper()
+        socket.bind("", 0)
+        socket.set_timeout(RECEPTION_TIMEOUT)
+        handshake_attempts = 0
+        arg_addr = (downloader_args.ADDR, downloader_args.PORT)
+        address = None
+        if downloader_args.selective_repeat:
+            handshake_sr(socket, arg_addr, handshake_attempts)
         else:
-            sr_client_download(socket, file_handler)
-    finally:
-        file_handler.close()
-        socket.close()
+            raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
+
+        try:
+            if downloader_args.stop_and_wait:
+                sw_client_download(socket, file_handler, raw_data, address)
+            else:
+                sr_client_download(socket, file_handler)
+        finally:
+            file_handler.close()
+            socket.close()
+    except KeyboardInterrupt:
+        logging.debug(' Keyboard Interrupt, ending connection')
+        exit(1)
+        

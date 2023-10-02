@@ -68,9 +68,11 @@ def sr_client_download(socket: SocketWrapper,
                 base += 1
                 attempts = 0
             # Si recibi el ultimo paquete, termino al toque roque
-            print(received_chunks.keys())
             if end and len(received_chunks) == 0:
                 break
+            # SI EL CLIENTE RECIBE EL END LO CORTA; PERO EL SERVER NO YA QUE PUEDE SER QUE ALGUN ACK SE HAYA PERDIDO!!
+
+            # DEL OTRO LADO (UPLOAD) HABRIA QUE MODIFICAR LO MISMO
         except TimeoutError:
             if attempts == MAX_ATTEMPTS:
                 logging.debug(' A timeout has occurred, ' +

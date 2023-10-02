@@ -105,7 +105,12 @@ def sr_client_upload(
                 del sent_chunks[seq]
 
             # Como recibi un ACK, muevo la ventana
-            base = seq + 1
+            chunk_elements = [int(x) for x in sent_chunks.keys()]
+            if seq == base:
+                if len(chunk_elements) > 0:
+                    base = min(chunk_elements)
+                    print(f"new base: {base}")
+
 
         except TimeoutError:
             # Timeout, reenvio todos los paquetes no confirmados
@@ -113,7 +118,6 @@ def sr_client_upload(
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                 logging.debug('Timeout occurred. Resending ' +
                               'unacknowledged chunks.')
-                print(sent_chunks.keys())
                 for seq, chunk in sent_chunks.items():
                     if seq == seq_end:
                         end = True

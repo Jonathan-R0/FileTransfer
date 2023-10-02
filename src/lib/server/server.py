@@ -14,13 +14,11 @@ from lib.server.server_client_upload import ServerClientUpload
 
 class Server:
     def __init__(self, host: str, port: int, dirpath: str):
-        self.host = host
-        self.port = port
         self.dirpath = dirpath
         self.clients = []
         self.clients_lock = Lock()
         self.socket_wrapper = SocketWrapper()
-        self.socket_wrapper.bind("", self.port)
+        self.socket_wrapper.bind(host, port)
 
     def start(self) -> None:
         logging.debug(' Listening...')

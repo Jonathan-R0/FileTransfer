@@ -8,6 +8,12 @@ parser.add_argument(
     default='.',
     help='source file path'
 )
-parser.add_argument('-n', '--name', dest='FILENAME', help='file name')
+parser.add_argument(
+    '-n',
+    '--name',
+    dest='FILENAME',
+    required=True,
+    help='file name'
+)
 
 uploader_args = parser.parse_args()

@@ -8,6 +8,12 @@ parser.add_argument(
     default='.',
     help='destination file path'
 )
-parser.add_argument('-n', '--name', dest='FILENAME', help='file name')
+parser.add_argument(
+    '-n',
+    '--name',
+    dest='FILENAME',
+    required=True,
+    help='file name'
+)
 
 downloader_args = parser.parse_args()

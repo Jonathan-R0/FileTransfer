@@ -5,7 +5,7 @@ def create_common_args(prog: str, description: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
         description=description)
-    group = parser.add_mutually_exclusive_group(required=False)
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         '-v',
         '--verbose',
@@ -18,17 +18,23 @@ def create_common_args(prog: str, description: str) -> argparse.ArgumentParser:
         action='store_true',
         help='decrease output verbosity'
     )
-    parser.add_argument('-H', '--host', dest='ADDR', help='server IP address')
+    parser.add_argument(
+        '-H',
+        '--host',
+        dest='ADDR',
+        type=str,
+        default='localhost',
+        help='server IP address'
+    )
     parser.add_argument(
         '-p',
         '--port',
         dest='PORT',
         type=int,
-        default=80,
+        default=8082,
         help='server port'
     )
-    # Falta el default
-    group = parser.add_mutually_exclusive_group(required=False)
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         '-sw',
         '--stop_and_wait',

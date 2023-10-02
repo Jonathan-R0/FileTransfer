@@ -1,4 +1,5 @@
 import socket
+import logging
 from typing import Any, Optional
 
 
@@ -10,7 +11,11 @@ class SocketWrapper:
 
     def bind(self, host: str, port: int) -> None:
         """El bind conecta el socket a un host y un puerto."""
-        self.socket.bind((host, port))
+        try:
+            self.socket.bind((host, port))
+        except OSError:
+            logging.error(' Error. Address already in use.')
+            exit(1)
 
     def sendto(self, address: str | tuple[Any, ...],
                data: str | bytes) -> None:

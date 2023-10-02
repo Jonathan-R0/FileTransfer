@@ -33,9 +33,8 @@ def sr_client_download(socket: SocketWrapper,
     end = False
     received_chunks = {}
     base = 1
-    attempts = 0
     socket.set_timeout(RECEPTION_TIMEOUT)
-    while attempts <= MAX_ATTEMPTS:
+    while True:
         try:
             # Recibo el paquete
             raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
@@ -66,20 +65,11 @@ def sr_client_download(socket: SocketWrapper,
                 del received_chunks[base]
                 file_handler.append_chunk(received_chunk)
                 base += 1
-                attempts = 0
-            # Si recibi el ultimo paquete, termino al toque roque
-            if end and len(received_chunks) == 0:
-                break
-            # SI EL CLIENTE RECIBE EL END LO CORTA; PERO EL SERVER NO YA QUE PUEDE SER QUE ALGUN ACK SE HAYA PERDIDO!!
-
-            # DEL OTRO LADO (UPLOAD) HABRIA QUE MODIFICAR LO MISMO
         except TimeoutError:
-            if attempts == MAX_ATTEMPTS:
+            if not end:
                 logging.debug(' A timeout has occurred, ' +
-                              'ending connection')
-                break
-            attempts += 1
-            continue
+                            'ending connection and deleting corrupted file')
+            break
     logging.debug(f' Client {address} ended')
 
 

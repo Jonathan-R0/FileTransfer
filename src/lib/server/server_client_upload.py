@@ -42,8 +42,8 @@ class ServerClientUpload(ServerClient):
                 if last_seq > 0:
                     raw_data, \
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                         raw_data)
+                _, seq, end, _, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
+                                                     raw_data)
                 logging.debug(
                     f' Recieved package \n{data}\n from: {address} ' +
                     f'with seq: {seq} and end: {end} with len {len(data)}'
@@ -89,8 +89,8 @@ class ServerClientUpload(ServerClient):
             try:
                 # Recibo el paquete
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, error, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
-                                                         raw_data)
+                _, seq, end, _, data = struct.unpack(NORMAL_PACKAGE_FORMAT,
+                                                     raw_data)
                 logging.debug(f'Received package from: {address} with seq:' +
                               f' {seq} and end: {end} with len {len(data)}')
 

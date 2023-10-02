@@ -100,7 +100,6 @@ class ServerClientDownload(ServerClient):
             try:
                 # Ahora recibo un ACK
                 raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
-                print(f"sent chunks: {sent_chunks.keys()}")
                 ack, seq = AckSeqPackage.unpack_from_server(raw_data)
                 logging.debug(f' Recieved ack: {ack} and seq: {seq}')
 
@@ -109,10 +108,8 @@ class ServerClientDownload(ServerClient):
                 if seq == min(chunk_elements):
                     if len(chunk_elements) > 1:
                         base = min(chunk_elements)
-                        print(f"new base: {base}")
                     else:
                         base = base + WINDOW_SIZE
-                        print(f"new base: {base}")
                     attempts = 0
 
                 # si el ACK esta en los que mande, lo saco de la lista
@@ -123,7 +120,6 @@ class ServerClientDownload(ServerClient):
             except TimeoutError:
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
-                print(f"attempts: {attempts}, chunks: {sent_chunks.keys()}")
                 if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                     logging.debug('Timeout occurred. Resending ' +
                                   'unacknowledged chunks.')
@@ -141,7 +137,7 @@ class ServerClientDownload(ServerClient):
                             )
                         self.socket.sendto(self.address, packet)
                 else:
-                    print("aca")
+                    ("aca")
                     break
         logging.debug(f' Client {self.address} ended')
         self.end()

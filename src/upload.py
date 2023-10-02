@@ -95,7 +95,6 @@ def sr_client_upload(
         try:
             # Ahora recibo un ACK
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-            print(f"sent chunks: {sent_chunks.keys()}")
             ack, seq = AckSeqPackage.unpack_from_server(raw_data)
             logging.debug(f' Recieved ack: {ack} and seq: {seq}')
 
@@ -104,10 +103,8 @@ def sr_client_upload(
             if seq == min(chunk_elements):
                 if len(chunk_elements) > 1:
                     base = min(chunk_elements)
-                    print(f"new base: {base}")
                 else:
                     base = base + WINDOW_SIZE
-                    print(f"new base: {base}")
                 attempts = 0
 
             # si el ACK esta en los que mande, lo saco de la lista
@@ -118,7 +115,6 @@ def sr_client_upload(
         except TimeoutError:
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
-            print(f"attempts: {attempts}, chunks: {sent_chunks.keys()}")
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                 logging.debug('Timeout occurred. Resending ' +
                                 'unacknowledged chunks.')
@@ -136,7 +132,6 @@ def sr_client_upload(
                         )
                     socket.sendto(address, packet)
             else:
-                print("aca")
                 break
     logging.debug(f' Client {address} ended')
 
@@ -145,7 +140,6 @@ if __name__ == '__main__':
     try:
         # File System Configuration
         path = os.path.join(uploader_args.FILEPATH, uploader_args.FILENAME)
-        print(path)
         try:
             file_handler = FileHandler(path, True, 'rb')
         except FileNotFoundError:

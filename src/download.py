@@ -204,8 +204,6 @@ if __name__ == '__main__':
         raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
 
     try:
-        # TODO: si el sw no se ingresa, entrar por defecto al sw (o al
-        # sr depende de lo que se quiera)
         if downloader_args.stop_and_wait:
             sw_client_download(socket, file_handler, raw_data, address)
         else:

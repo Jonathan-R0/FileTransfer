@@ -103,7 +103,8 @@ class ServerClientUpload(ServerClient):
                                        AckSeqPackage.pack_to_send(seq, seq))
                     logging.debug(f'Sending ack for seq: {seq}')
                 elif seq < base:
-                    self.socket.sendto(self.address, AckSeqPackage.pack_to_send(seq, seq))
+                    self.socket.sendto(self.address,
+                                       AckSeqPackage.pack_to_send(seq, seq))
                     logging.debug(f'Sending ack for seq: {seq}')
                 # Chequeo si el paquete esta en sequencia
                 # y lo agrego al archivo

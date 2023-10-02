@@ -21,7 +21,7 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 
 2. Si se carga un archivo con un nombre que ya existe en el servidor, este será reemplazado por el nuevo archivo.
 
-3. Al descargar un archivo del servidor desde el cliente que en la carpeta donde se va a descargar se encuentra un archivo con el mismo nombre, se pisa el archivo.
+3. Si en el cliente se encuentra un archivo y se quiere descargar del servidor un archivo con el mismo nombre, se pisa el archivo en el cliente.
 
 4. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
 

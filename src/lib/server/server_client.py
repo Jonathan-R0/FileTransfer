@@ -42,7 +42,7 @@ class ServerClient(threading.Thread):
 
     def return_error_to_client(self, error: int) -> None:
         self.socket.sendto(self.address,
-                           NormalPackage.pack_to_send(0, 0, b'', True, error))
+                           NormalPackage.pack_to_send(0, 0, True, error, 0))
 
     def create_socket_and_reply_handshake(self) -> None:
         self.create_socket()

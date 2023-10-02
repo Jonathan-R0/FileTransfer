@@ -113,7 +113,7 @@ def sw_client_download(
                 )
         except TimeoutError:
             logging.debug(' A timeout has occurred, ' +
-                            'ending connection and deleting corrupted file')
+                          'ending connection and deleting corrupted file')
             file_handler.rollback_write()
 
 

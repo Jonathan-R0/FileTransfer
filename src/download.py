@@ -11,7 +11,6 @@ from lib.common.config import (
     NORMAL_PACKAGE_SIZE,
     RECEPTION_TIMEOUT,
     WINDOW_SIZE,
-    ACK_SEQ_SIZE,
     MAX_ATTEMPTS
 )
 from lib.common.file_handler import FileHandler
@@ -42,7 +41,7 @@ def sw_client_download(
         try:
             if last_seq > 0:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            ack, seq, end, error, checksum, data = \
+            seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
             if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
@@ -51,12 +50,12 @@ def sw_client_download(
             if error != 0:
                 handle_error_codes_client(error)
                 break
-            if seq == last_seq + 1 and ack == last_seq:
+            if seq == last_seq + 1:
                 last_seq = seq
                 file_handler.append_chunk(data)
                 logging.debug(f' Recieved package from: {address} with ' +
                               f'seq: {seq} and end: {end}')
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq))
             else:
                 logging.debug(
                     f' Recieved package from: {address} with seq: ' +
@@ -64,7 +63,7 @@ def sw_client_download(
                 )
                 socket.sendto(
                     address,
-                    AckSeqPackage.pack_to_send(last_seq, last_seq)
+                    AckSeqPackage.pack_to_send(last_seq)
                 )
         except TimeoutError:
             if not end:
@@ -90,7 +89,7 @@ def sr_client_download(socket: SocketWrapper,
                 first_iteration = False
             else:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            _, seq, end, error, checksum, data = \
+            seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
             if error != 0:
                 handle_error_codes_client(error)
@@ -109,15 +108,15 @@ def sr_client_download(socket: SocketWrapper,
             if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
                 received_chunks[seq] = data
                 socket.sendto(address,
-                              AckSeqPackage.pack_to_send(seq, seq))
+                              AckSeqPackage.pack_to_send(seq))
                 logging.debug(f'Sending ack for seq: {seq}')
             elif seq in received_chunks:
                 # Si ya tenia el paquete, mando confirmacion de nuevo
                 socket.sendto(address,
-                              AckSeqPackage.pack_to_send(seq, seq))
+                              AckSeqPackage.pack_to_send(seq))
                 logging.debug(f'Sending ack for seq: {seq}')
             elif seq < base:
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq))
                 logging.debug(f'Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo
@@ -130,7 +129,8 @@ def sr_client_download(socket: SocketWrapper,
             if len(received_chunks) != 0 or \
                        (not has_end_pkg and len(received_chunks) == 0):
                 logging.debug(' A timeout has occurred, ' +
-                              'ending connection')
+                              'ending connection and deleting corrupted file')
+                file_handler.rollback_write()
             break
     if address:
         logging.debug(f' Client {address} ended')

@@ -34,7 +34,6 @@ class ServerClientUpload(ServerClient):
             self.end()
             return
         logging.debug(f' New client: {address}')
-        self.socket.set_timeout(None)
         self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
 
     def sw_upload(self, raw_data: bytes, address: tuple) -> None:
@@ -42,15 +41,14 @@ class ServerClientUpload(ServerClient):
             return
         end = False
         last_seq = 0
-        self.socket.set_timeout(RECEPTION_TIMEOUT)
         while True:
             try:
                 if last_seq > 0:
                     raw_data, \
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, checksum, data = \
+                seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(struct.pack('256s', data)).digest():
+                if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring...')
                     continue
@@ -64,7 +62,7 @@ class ServerClientUpload(ServerClient):
                     )
                     self.socket.sendto(
                         address,
-                        AckSeqPackage.pack_to_send(seq, seq)
+                        AckSeqPackage.pack_to_send(seq)
                     )
                 else:
                     logging.debug(
@@ -73,7 +71,7 @@ class ServerClientUpload(ServerClient):
                     )
                     self.socket.sendto(
                         address,
-                        AckSeqPackage.pack_to_send(last_seq, last_seq)
+                        AckSeqPackage.pack_to_send(last_seq)
                     )
             except TimeoutError:
                 if not end:
@@ -92,14 +90,13 @@ class ServerClientUpload(ServerClient):
         received_chunks = {}
         base = 1
         has_end_pkg = False
-        self.socket.set_timeout(RECEPTION_TIMEOUT)
         while True:
             try:
                 # Recibo el paquete
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, checksum, data = \
+                seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(struct.pack('256s', data)).digest():
+                if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring... {any(data)}')
                     continue
@@ -114,16 +111,16 @@ class ServerClientUpload(ServerClient):
                         base <= seq < base + WINDOW_SIZE:
                     received_chunks[seq] = data
                     self.socket.sendto(address,
-                                       AckSeqPackage.pack_to_send(seq, seq))
+                                       AckSeqPackage.pack_to_send(seq))
                     logging.debug(f'Sending ack for seq: {seq}')
                 elif seq in received_chunks:
                     # Si ya tenia el paquete, mando confirmacion de nuevo
                     self.socket.sendto(address,
-                                       AckSeqPackage.pack_to_send(seq, seq))
+                                       AckSeqPackage.pack_to_send(seq))
                     logging.debug(f'Sending ack for seq: {seq}')
                 elif seq < base:
                     self.socket.sendto(self.address,
-                                       AckSeqPackage.pack_to_send(seq, seq))
+                                       AckSeqPackage.pack_to_send(seq))
                     logging.debug(f'Sending ack for seq: {seq}')
                 # Chequeo si el paquete esta en sequencia
                 # y lo agrego al archivo

@@ -48,13 +48,13 @@ class ServerClient(threading.Thread):
         self.failed = True
         self.create_socket()
         self.socket.sendto(self.address,
-                           NormalPackage.pack_to_send(0, 0, b'ERROR', True, error))
+                           NormalPackage.pack_to_send(0, b'ERROR', True, error))
         self.socket.close()
 
     def create_socket_and_reply_handshake(self) -> None:
         self.create_socket()
         logging.debug(f' Replying to handshake from: {self.address}')
-        self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
+        self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0))
 
     def create_socket(self) -> None:
         self.socket = SocketWrapper()

@@ -14,7 +14,7 @@ class FileHandler:
             ):
         if mode == 'rb' and filepath.endswith('.tmp') and not is_upload:
             raise DownloadingTemporaryFileError
-        if mode == 'wb' and is_upload and is_upload \
+        if mode == 'wb' and is_upload and \
             (os.path.exists(filepath) or os.path.exists(filepath + '.tmp')) :
             raise UploadExistingFileError
         self.file = open(

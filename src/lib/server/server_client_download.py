@@ -97,7 +97,6 @@ class ServerClientDownload(ServerClient):
                     # Me guardo el paquete que mande para reenviarlo
                     # si es necesario
                     sent_chunks[next_seq_num] = chunk
-                    print(sent_chunks[next_seq_num])
                     next_seq_num += 1
             
 
@@ -129,7 +128,6 @@ class ServerClientDownload(ServerClient):
                     return
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
-                print(len(sent_chunks))
                 if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                     logging.debug(' Timeout occurred. Resending ' +
                                   'unacknowledged chunks.')

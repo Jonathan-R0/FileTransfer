@@ -108,7 +108,6 @@ class ServerClientDownload(ServerClient):
                 if first_iteration:
                     first_iteration = False
                     logging.debug(f' New client: {self.address}')
-                    print('xd')
                 logging.debug(f' Recieved ack with seq: {seq}')
 
                 # Como recibi un ACK, muevo la ventana

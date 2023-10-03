@@ -34,7 +34,6 @@ class FileHandler:
         if end:
             chunk = chunk.rstrip(b'\x00')
         self.file.write(chunk)
-        print(chunk)
 
     def size(self) -> int:
         return self.len

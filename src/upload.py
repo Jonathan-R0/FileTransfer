@@ -32,7 +32,6 @@ def sw_client_upload(
         address: tuple
         ) -> None:
     end = False
-    ack = 0
     seq = 1
     lost_pkg_attempts = 0
     while not end and lost_pkg_attempts < MAX_ATTEMPTS:
@@ -41,20 +40,18 @@ def sw_client_upload(
             if end:
                 logging.debug(
                     f' Sending last chunk with size: {len(chunk)}')
-            socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
+            socket.sendto(address, NormalPackage.pack_to_send(seq,
                           chunk, end, 0))
             while True:
                 raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-                new_ack, new_seq = AckSeqPackage.unpack_from_server(raw_data)
-                logging.debug(f' Recieved ack: {new_ack} and seq: {new_seq}')
-                if new_seq == seq == new_ack:
+                new_seq = AckSeqPackage.unpack_from_server(raw_data)
+                logging.debug(f' Recieved ack with seq: {new_seq}')
+                if new_seq == seq:
                     lost_pkg_attempts = 0
                     seq += 1
-                    ack += 1
                     break
         except TimeoutError:
             lost_pkg_attempts += 1
-            print(lost_pkg_attempts)
             logging.debug(' A timeout has occurred, no ack was recieved')
             end = False
     logging.debug(f' Client {address} ended')
@@ -76,12 +73,14 @@ def sr_client_upload(
     while attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
+            if(seq_end > 0 and next_seq_num > seq_end):
+                break
             chunk, end = file_handler.read_next_chunk(next_seq_num)
             if end:
                 seq_end = next_seq_num
 
             if chunk or end or len(chunk) != 0:
-                packet = NormalPackage.pack_to_send(0, next_seq_num, chunk,
+                packet = NormalPackage.pack_to_send(next_seq_num, chunk,
                                                     end, 0)
                 socket.sendto(address, packet)
                 logging.debug(f' Sent chunk {next_seq_num} with size ' +
@@ -95,8 +94,8 @@ def sr_client_upload(
         try:
             # Ahora recibo un ACK
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-            ack, seq = AckSeqPackage.unpack_from_server(raw_data)
-            logging.debug(f' Recieved ack: {ack} and seq: {seq}')
+            seq = AckSeqPackage.unpack_from_server(raw_data)
+            logging.debug(f' Recieved ack with seq: {seq}')
 
             # Como recibi un ACK, muevo la ventana
             chunk_elements = [int(x) for x in sent_chunks.keys()]
@@ -116,7 +115,7 @@ def sr_client_upload(
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
-                logging.debug('Timeout occurred. Resending ' +
+                logging.debug(' Timeout occurred. Resending ' +
                               'unacknowledged chunks.')
                 for seq, chunk in sent_chunks.items():
                     if seq == seq_end:
@@ -124,7 +123,6 @@ def sr_client_upload(
                     else:
                         end = False
                     packet = NormalPackage.pack_to_send(
-                            0,
                             seq,
                             chunk,
                             end,
@@ -178,10 +176,10 @@ if __name__ == '__main__':
                                 uploader_args.FILENAME)
                               )
                 raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
-                ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-                logging.debug(f' Recieved ack: {ack} & seq: {seq} ' +
+                seq = AckSeqPackage.unpack_from_client(raw_data)
+                logging.debug(f' Recieved ack with seq: {seq} ' +
                               f'from {address}')
-                if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
+                if seq == 0 and comp_host(address[0], arg_addr[0]):
                     break
                 else:
                     handshake_attempts += 1

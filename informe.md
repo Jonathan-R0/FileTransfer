@@ -32,7 +32,7 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
     b. ACK-SEQ Package: 8 bytes
     c. Data Package: 285 bytes
 
-7. El tamaño de la ventana para selective repeat es de 10 paquetes.
+7. El tamaño de la ventana para selective repeat es de 1000 paquetes.
 
 8. El tamaño máximo del nombre de un archivo es de 256 bytes.
 
@@ -44,34 +44,29 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 
 Para llevar a cabo una transferencia de archivos eficiente, es imperativo contar con un protocolo de envío de datos sólido, especialmente al utilizar el Protocolo de Datagramas de Usuario (UDP). UDP es un protocolo de comunicación sin conexión que no garantiza la entrega de los datos ni confirma su recepción. En este contexto, implementar un protocolo de envío se vuelve crucial para asegurar la integridad y confiabilidad de los datos transferidos. Este protocolo establece las reglas y formatos que deben seguir los datos durante su transmisión, lo que proporciona una estructura coherente para el proceso de envío y recepción. Así, al contar con un protocolo de envío adecuado para los datos en una conexión UDP, se maximiza la eficiencia y se garantiza la llegada segura de la información a su destino.
 
-Particularmente no enviamos el ACK en los paquetes normales del selective repeat. Esto es asi dado que el ACK es necesario para el protocolo de stop and wait.
-
 #### **Handshake**
 
-El proceso de Handshake desempeña un papel crucial en las transferencias de archivos a través de conexiones UDP, proporcionando un método estructurado y confiable para la comunicación entre el cliente y el servidor. Este protocolo se caracteriza por un intercambio bidireccional de mensajes entre ambas partes, estableciendo así una conexión segura antes de la transmisión de datos. Durante el Handshake, el cliente inicia el proceso enviando un mensaje al servidor, quien, a su vez, responde con un acknowledgment. Es esencial destacar que el cliente aguarda este acknowledgment del servidor para proceder con el envío o la descarga del archivo correspondiente.
+El proceso de Handshake desempeña un papel crucial en las transferencias de archivos a través de conexiones UDP, proporcionando un método estructurado y confiable para la comunicación entre el cliente y el servidor. Nuestro protocolo se caracteriza por un intercambio bidireccional de mensajes entre ambas partes, estableciendo así una conexión segura antes de la transmisión de datos. En primer lugar, el cliente inicia el proceso enviando un mensaje inicial al servidor, quien, a su vez, responde dependiendo de la operación solicitada: con un acknowledgment en el caso de la carga para que el cliente pueda a empezar mandar losd paquetes con el archivo o, en el caso de la descarga, envia directamente los paquetes con el archivo que se quiere descargar. 
 
-El formato del mensaje del Handshake se compone de 262 bytes, divididos en un encabezado (header) de 6 bytes y un sector de información de 256 bytes. El encabezado contiene cuatro elementos fundamentales:
+El formato del mensaje inicial se compone de 262 bytes, divididos en un encabezado (header) de 6 bytes y un sector de información de 256 bytes. El encabezado contiene cuatro elementos fundamentales:
 
 1. **Carga/Descarga**: Un byte que indica si el cliente está cargando (upload) o descargando (download) un archivo.
 2. **Stop and Wait**: Un byte que especifica si el cliente está utilizando el método Stop and Wait o Selective Repeat para la transmisión de datos.
 3. **Tamaño del Archivo**: Cuatro bytes que indican el tamaño del archivo que se va a enviar.
 4. **Nombre del Archivo**: Doscientos cincuenta y seis bytes que contienen el nombre del archivo a ser transferido.
 
-En respuesta al mensaje del cliente, el servidor emite un acknowledgment de 8 bytes, que consta de dos componentes clave:
+Si fuera una carga, el servidor, en respuesta al mensaje del cliente, emite un acknowledgment de 4 bytes, que consta de un numero de secuencia.
 
-1. **ACK (Acknowledgment Number)**: Cuatro bytes que representan el número de acknowledgment.
-2. **SEQ (Sequence Number)**: Cuatro bytes que denotan el número de secuencia.
-
-En el contexto del Handshake, tanto el número de acknowledgment como el número de secuencia se establecen en 0, indicando que este es el primer mensaje que se envía en la transacción. Este enfoque estructurado y formal en el intercambio de información garantiza una transferencia de archivos segura y confiable a través de conexiones UDP.
+En este contexto, el número de secuencia se establece en 0, indicando que este es el primer mensaje que se envía en la transacción. Este enfoque estructurado y formal en el intercambio de información garantiza una transferencia de archivos segura y confiable a través de conexiones UDP.
 
 #### **Transferencia de Archivos mediante Segmentación de Datos y Paquetes**
 
-En el contexto de la transferencia de archivos, la información se segmenta en paquetes de 269 bytes, adaptándose dinámicamente al tamaño total de los datos. Estos paquetes se envían al servidor o al cliente, quienes los reciben y los almacenan en un archivo correspondiente. Una vez que se ha completado el proceso de Handshake y se ha establecido la conexión segura, la transferencia de archivos tiene lugar. Los paquetes que contienen datos están estructurados de la siguiente manera:
+En el contexto de la transferencia de archivos, la información se segmenta en paquetes de 281 bytes, adaptándose dinámicamente al tamaño total de los datos. Estos paquetes se envían al servidor o al cliente, quienes los reciben y los almacenan en un archivo correspondiente. Una vez que se ha completado el proceso de Handshake y se ha establecido la conexión segura, la transferencia de archivos tiene lugar. Los paquetes que contienen datos están estructurados de la siguiente manera:
 
-1. **ACK (Acknowledgment Number)**: Cuatro bytes que indican el número de acknowledgment, confirmando la recepción del paquete.
-2. **SEQ (Sequence Number)**: Cuatro bytes que indican el número de secuencia del paquete, identificando su posición en la secuencia de datos.
-3. **END (End of File)**: Un byte que indica si este es el último paquete de la secuencia o si hay más por seguir.
-4. **ERROR (Error Code)**: Cuatro bytes que señalan si ha ocurrido algún error durante la transferencia, proporcionando un código específico para identificar el tipo de error.
+1. **SEQ (Sequence Number)**: Cuatro bytes que indican el número de secuencia del paquete, identificando su posición en la secuencia de datos.
+2. **END (End of File)**: Un byte que indica si este es el último paquete de la secuencia o si hay más por seguir.
+3. **ERROR (Error Code)**: Cuatro bytes que señalan si ha ocurrido algún error durante la transferencia, proporcionando un código específico para identificar el tipo de error.
+4. **CHECKSUM**: 16 bytes que se comparan con el hash de los bytes de la data para saber si se corrompieron los datos en el envío.
 5. **DATA**: Doscientos cincuenta y seis bytes que contienen la información del archivo a ser transferido.
 
 Estos paquetes son transmitidos al servidor o al cliente, quienes los reciben y los almacenan en un archivo local. Una vez que el paquete es recibido con éxito, el cliente o el servidor envía un acknowledgment al otro para confirmar la recepción correcta del paquete. En el caso de que el paquete no llegue correctamente, el cliente o el servidor no emite el acknowledgment, lo que indica al host emisor que debe reenviar el paquete para garantizar una transferencia sin errores.
@@ -89,7 +84,7 @@ Por otro lado, si el receptor recibe un paquete que no es el esperado, se reenvi
 
 **SELECTIVE REPEAT:**
 
-Por otro lado, en la implementación de Selective Repeat, se establece una ventana de tamaño 10 para el envío de paquetes. Esto significa que el cliente tiene la capacidad de enviar hasta 10 paquetes simultáneamente, esperando a que el servidor le envíe los acknowledgments correspondientes. En caso de que el servidor reciba un paquete incorrecto, lo ignora y espera por el paquete correcto. Si el emisor no recibe un acknowledgment dentro del tiempo especificado, reenvía el paquete correspondiente.
+Por otro lado, en la implementación de Selective Repeat, se establece una ventana de tamaño 1000 para el envío de paquetes. Esto significa que el cliente tiene la capacidad de enviar hasta 1000 paquetes simultáneamente, esperando a que el servidor le envíe los acknowledgments correspondientes. En caso de que el servidor reciba un paquete incorrecto, lo ignora y espera por el paquete correcto. Si el emisor no recibe un acknowledgment dentro del tiempo especificado, reenvía el paquete correspondiente.
 
 En situaciones donde el receptor recibe un paquete duplicado, reenvía el acknowledgment del paquete que ya ha recibido previamente. Si el paquete recibido es el esperado, se almacena para su posterior procesamiento y se emite el acknowledgment correspondiente. Esta implementación permite una gestión eficiente y segura de la transferencia de archivos, garantizando la integridad y la confiabilidad del proceso, ya sea mediante el enfoque de Stop and Wait o Selective Repeat.
 
@@ -109,7 +104,7 @@ La función de un protocolo de capa de aplicacion es comunicar distintos hosts a
 
 ### Protocolo utilizado
 
-Nuestro protocolo consta de realizar una transferencia de datos confiable (RDT). Primero realizamos un handshake, donde el cliente le envia al host un mensaje inicial y este debe responderle con un acknowledgment.
+Nuestro protocolo consta de realizar una transferencia de datos confiable (RDT). Primero realizamos un handshake, donde el cliente le envia al host un mensaje inicial y este debe responderle con un acknowledgment (en el caso de la descarga, se empieza a enviar datos del archivo a descargar y si el cliente lo recive, se puede afirmar que el servidor escucho el mensaje inicial).
 
 Luego en función de la operación a realizar se ejecuta una parte diferente del proceso.
 
@@ -131,13 +126,13 @@ UDP es preferible sobre TCP para aplicaciones donde no es un problema importante
 
 Fue dificil debuggear instancias de problemas relacionadas con la perdida de paquetes. Resulto complicado producto de varios casos borde que no habiamos tenido en cuenta y por la extensa logica empleada en los archivos.
 
-Tambien resulto interesante y no por ello facil, definir la estrucutura de los paquetes. Siempre evitamos agregar datos para que este sea lo mas ligero posible. A veces esto no se podia hacer, por ejemplo con el paquete normal que posee un booleano de finalización.
+Tambien resulto interesante y no por ello facil, definir la estrucutura de los paquetes. Siempre evitamos agregar datos para que este sea lo mas ligero posible. A veces esto no se podia hacer, por ejemplo con el paquete normal que posee un booleano de finalización. También nos ocurrió de haber agregado algun campo que luego, en la implementacion, no ultilizamos y tuvimos que cambiarlo.
 
 Nos resulto finalmente extremadamente complicado dividir las tareas entre los integrantes del grupo, mayoritariamente en el desarrollo inicial del proyecto. Esto, junto con que fuimos tres personas desarrollando el trabajo (dado que nuestro cuarto integrante abandono la materia) dificulto mucho el proceso.
 
 ## Conclusiones
 
-Aprendimos que para el manejo de redes, es útil utilizar metodos de ejecución concurrente pero que deben ser cuidadosamente analizados para evitar crear vulnerabilidades en el host. Por ejemplo, podria pasar que si no verificamos la cantidad de clientes ejecutandose concurrentemente, un atacante podria enviar muchos requests en paralelo, lo cual agotaría los recursos del server producto de que cada thread necesita recursos de la maquina.
+Aprendimos que para el manejo de redes, es útil utilizar métodos de ejecución concurrente pero que deben ser cuidadosamente analizados para evitar crear vulnerabilidades en el host. Por ejemplo, podria pasar que si no verificamos la cantidad de clientes ejecutandose concurrentemente, un atacante podria enviar muchos requests en paralelo, lo cual agotaría los recursos del server producto de que cada thread necesita recursos de la maquina.
 
 Pudimos implementar correctamente los dos protocolos Stop and Wait y Selective Repeat.
 

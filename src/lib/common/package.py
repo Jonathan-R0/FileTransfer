@@ -32,25 +32,25 @@ class InitialHandshakePackage:
 class AckSeqPackage:
 
     @staticmethod
-    def unpack_from_server(data: bytes) -> tuple[Any, ...]:
-        return struct.unpack(ACK_SEQ_FORMAT, data)
+    def unpack_from_server(data: bytes) -> int:
+        return struct.unpack(ACK_SEQ_FORMAT, data)[0]
 
     @staticmethod
-    def unpack_from_client(data: bytes) -> tuple[Any, ...]:
+    def unpack_from_client(data: bytes) -> int:
         return AckSeqPackage.unpack_from_server(data)
 
     @staticmethod
-    def pack_to_send(ack: int, seq: int) -> str:
-        return struct.pack(ACK_SEQ_FORMAT, ack, seq)
+    def pack_to_send(seq: int) -> bytes:
+        return struct.pack(ACK_SEQ_FORMAT, seq)
 
 
 class NormalPackage:
 
     @staticmethod
-    def pack_to_send(ack: int, seq: int, data: bytes,
+    def pack_to_send(seq: int, data: bytes,
                      end: bool, error: int) -> bytes:
         checksum = md5(struct.pack('!256s', data)).digest()
-        return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error,
+        return struct.pack(NORMAL_PACKAGE_FORMAT, seq, end, error,
                            checksum, data)
 
     @staticmethod

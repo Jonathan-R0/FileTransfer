@@ -48,7 +48,8 @@ class ServerClient(threading.Thread):
         self.failed = True
         self.create_socket()
         self.socket.sendto(self.address,
-                           NormalPackage.pack_to_send(0, 0, b'ERROR', True, error))
+                           NormalPackage.pack_to_send(0, 0, b'ERROR',
+                                                      True, error))
         self.socket.close()
 
     def create_socket_and_reply_handshake(self) -> None:

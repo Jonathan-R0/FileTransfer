@@ -41,10 +41,9 @@ class ServerClientDownload(ServerClient):
             try:
                 chunk, end = self.file.read_next_chunk(seq)
                 if end:
-                    logging.debug(
-                        f' Sending last chunk with ' +
-                        f'size: {len(chunk)}, ack: {ack}, seq:{seq} and end: {end}'
-                    )
+                    logging.debug(' Sending last chunk with ' +
+                                  f'size: {len(chunk)} end: {end}'
+                                  )
                 self.socket.sendto(
                     self.address,
                     NormalPackage.pack_to_send(ack, seq, chunk, end, 0)
@@ -135,11 +134,11 @@ class ServerClientDownload(ServerClient):
                         else:
                             end = False
                         packet = NormalPackage.pack_to_send(
-                                0,
-                                seq,
-                                chunk,
-                                end,
-                                0
+                                                0,
+                                                seq,
+                                                chunk,
+                                                end,
+                                                0
                             )
                         self.socket.sendto(self.address, packet)
                 else:

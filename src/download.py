@@ -47,7 +47,8 @@ def sr_client_download(socket: SocketWrapper,
             if error != 0:
                 handle_error_codes_client(error)
                 break
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+            if any(data) and checksum != md5(struct.pack('!256s',
+                                             data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -103,7 +104,8 @@ def sw_client_download(
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             ack, seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+            if any(data) and checksum != md5(struct.pack('!256s',
+                                                         data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue

@@ -18,6 +18,7 @@ from lib.common.file_handler import FileHandler
 import os
 from hashlib import md5
 from lib.common.error_codes import handle_error_codes_client
+import struct
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +47,7 @@ def sr_client_download(socket: SocketWrapper,
             if error != 0:
                 handle_error_codes_client(error)
                 break
-            if any(data) and checksum != md5(data).digest():
+            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -78,7 +79,7 @@ def sr_client_download(socket: SocketWrapper,
                 file_handler.append_chunk(received_chunk)
                 base += 1
         except TimeoutError:
-            if not len(received_chunks) == 0 or \
+            if len(received_chunks) != 0 or \
                        (not has_end_pkg and len(received_chunks) == 0):
                 logging.debug(' A timeout has occurred, ' +
                               'ending connection')
@@ -102,7 +103,7 @@ def sw_client_download(
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             ack, seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
-            if any(data) and checksum != md5(data).digest():
+            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -125,9 +126,11 @@ def sw_client_download(
                     AckSeqPackage.pack_to_send(last_seq, last_seq)
                 )
         except TimeoutError:
-            logging.debug(' A timeout has occurred, ' +
-                          'ending connection and deleting corrupted file')
-            file_handler.rollback_write()
+            if not end:
+                logging.debug(' A timeout has occurred, ' +
+                              'ending connection and deleting corrupted file')
+                file_handler.rollback_write()
+            break
 
 
 def handshake_sw(

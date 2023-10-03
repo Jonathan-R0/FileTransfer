@@ -11,6 +11,7 @@ from lib.common.config import (
 )
 import logging
 from hashlib import md5
+import struct
 
 
 class ServerClientUpload(ServerClient):
@@ -49,7 +50,7 @@ class ServerClientUpload(ServerClient):
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(data).digest():
+                if any(data) and checksum != md5(struct.pack('256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring...')
                     continue
@@ -98,7 +99,7 @@ class ServerClientUpload(ServerClient):
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 _, seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(data).digest():
+                if any(data) and checksum != md5(struct.pack('256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring... {any(data)}')
                     continue

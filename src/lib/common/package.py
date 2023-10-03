@@ -49,8 +49,9 @@ class NormalPackage:
     @staticmethod
     def pack_to_send(ack: int, seq: int, data: bytes,
                      end: bool, error: int) -> bytes:
+        checksum = md5(struct.pack('!256s', data)).digest()
         return struct.pack(NORMAL_PACKAGE_FORMAT, ack, seq, end, error,
-                           md5(data).digest(), data)
+                           checksum, data)
 
     @staticmethod
     def unpack_from_client(data: bytes) -> tuple[Any, ...]:

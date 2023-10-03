@@ -49,6 +49,7 @@ def sw_client_download(
                 continue
             if error != 0:
                 handle_error_codes_client(error)
+                file_handler.rollback_write()
                 socket.sendto(address,
                             AckSeqPackage.pack_to_send(seq, 0))
                 break
@@ -96,6 +97,7 @@ def sr_client_download(socket: SocketWrapper,
                 NormalPackage.unpack_from_client(raw_data)
             if error != 0:
                     handle_error_codes_client(error)
+                    file_handler.rollback_write()
                     socket.sendto(address,
                               AckSeqPackage.pack_to_send(seq, 0))
                     break

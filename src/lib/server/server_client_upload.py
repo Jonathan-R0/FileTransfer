@@ -53,10 +53,6 @@ class ServerClientUpload(ServerClient):
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring...')
                     continue
-                logging.debug(
-                    f' Recieved package \n{data}\n from: {address} ' +
-                    f'with seq: {seq} and end: {end} with len {len(data)}'
-                )
 
                 if seq == last_seq + 1:
                     last_seq = seq
@@ -73,6 +69,10 @@ class ServerClientUpload(ServerClient):
                     logging.debug(
                         f' Recieved package from: {address} with seq: ' +
                         f'{seq} and end: {end} but missed previous package'
+                    )
+                    self.socket.sendto(
+                        address,
+                        AckSeqPackage.pack_to_send(last_seq, last_seq)
                     )
             except TimeoutError:
                 if not end:

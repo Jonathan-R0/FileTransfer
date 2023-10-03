@@ -109,8 +109,6 @@ def sw_client_download(
             if error != 0:
                 handle_error_codes_client(error)
                 break
-            logging.debug(f' Recieved package \n{raw_data}\n from: ' +
-                          f'{address} with len {len(raw_data)} and end: {end}')
             if seq == last_seq + 1 and ack == last_seq:
                 last_seq = seq
                 file_handler.append_chunk(data)

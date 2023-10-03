@@ -52,7 +52,7 @@ def sw_client_download(
                 break
             if seq == last_seq + 1:
                 last_seq = seq
-                file_handler.append_chunk(data)
+                file_handler.append_chunk(data, end)
                 logging.debug(f' Recieved package from: {address} with ' +
                               f'seq: {seq} and end: {end}')
                 socket.sendto(address, AckSeqPackage.pack_to_send(seq))
@@ -81,6 +81,7 @@ def sr_client_download(socket: SocketWrapper,
     received_chunks = {}
     base = 1
     has_end_pkg = False
+    seq_end = 0
     first_iteration = True
     while True:
         try:
@@ -100,7 +101,8 @@ def sr_client_download(socket: SocketWrapper,
                 continue
             if end:
                 has_end_pkg = True
-            logging.debug(f'Received package from: {address} with seq:' +
+                seq_end = seq
+            logging.debug(f' Received package from: {address} with seq:' +
                           f' {seq} and end: {end} with len {len(data)}')
 
             # Si no tenia el paquete que me mandaron y esta
@@ -109,21 +111,21 @@ def sr_client_download(socket: SocketWrapper,
                 received_chunks[seq] = data
                 socket.sendto(address,
                               AckSeqPackage.pack_to_send(seq))
-                logging.debug(f'Sending ack for seq: {seq}')
+                logging.debug(f' Sending ack for seq: {seq}')
             elif seq in received_chunks:
                 # Si ya tenia el paquete, mando confirmacion de nuevo
                 socket.sendto(address,
                               AckSeqPackage.pack_to_send(seq))
-                logging.debug(f'Sending ack for seq: {seq}')
+                logging.debug(f' Sending ack for seq: {seq}')
             elif seq < base:
                 socket.sendto(address, AckSeqPackage.pack_to_send(seq))
-                logging.debug(f'Sending ack for seq: {seq}')
+                logging.debug(f' Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo
             while base in received_chunks:
                 received_chunk = received_chunks[base]
                 del received_chunks[base]
-                file_handler.append_chunk(received_chunk)
+                file_handler.append_chunk(received_chunk, seq_end == base)
                 base += 1
         except TimeoutError:
             if len(received_chunks) != 0 or \

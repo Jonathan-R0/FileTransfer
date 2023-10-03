@@ -81,6 +81,8 @@ class ServerClientDownload(ServerClient):
         while attempts <= MAX_ATTEMPTS:
             # Mando paquetes si tengo espacio en la ventana
             while next_seq_num < base + WINDOW_SIZE and not end:
+                if(seq_end > 0 and next_seq_num > seq_end):
+                    break
                 chunk, end = self.file.read_next_chunk(next_seq_num)
                 if len(chunk) == 0:
                     break

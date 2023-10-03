@@ -55,7 +55,7 @@ class ServerClientUpload(ServerClient):
 
                 if seq == last_seq + 1:
                     last_seq = seq
-                    self.file.append_chunk(data)
+                    self.file.append_chunk(data, end)
                     logging.debug(
                         f' Recieved package from: {address} ' +
                         f'with seq: {seq} and end: {end}'
@@ -90,6 +90,7 @@ class ServerClientUpload(ServerClient):
         received_chunks = {}
         base = 1
         has_end_pkg = False
+        seq_end = 0
         while True:
             try:
                 # Recibo el paquete
@@ -102,7 +103,8 @@ class ServerClientUpload(ServerClient):
                     continue
                 if end:
                     has_end_pkg = True
-                logging.debug(f'Received package from: {address} with seq:' +
+                    seq_end = seq
+                logging.debug(f' Received package from: {address} with seq:' +
                               f' {seq} and end: {end} with len {len(data)}')
 
                 # Si no tenia el paquete que me mandaron y esta
@@ -112,22 +114,22 @@ class ServerClientUpload(ServerClient):
                     received_chunks[seq] = data
                     self.socket.sendto(address,
                                        AckSeqPackage.pack_to_send(seq))
-                    logging.debug(f'Sending ack for seq: {seq}')
+                    logging.debug(f' Sending ack for seq: {seq}')
                 elif seq in received_chunks:
                     # Si ya tenia el paquete, mando confirmacion de nuevo
                     self.socket.sendto(address,
                                        AckSeqPackage.pack_to_send(seq))
-                    logging.debug(f'Sending ack for seq: {seq}')
+                    logging.debug(f' Sending ack for seq: {seq}')
                 elif seq < base:
                     self.socket.sendto(self.address,
                                        AckSeqPackage.pack_to_send(seq))
-                    logging.debug(f'Sending ack for seq: {seq}')
+                    logging.debug(f' Sending ack for seq: {seq}')
                 # Chequeo si el paquete esta en sequencia
                 # y lo agrego al archivo
                 while base in received_chunks:
                     received_chunk = received_chunks[base]
                     del received_chunks[base]
-                    self.file.append_chunk(received_chunk)
+                    self.file.append_chunk(received_chunk, seq_end == base)
                     base += 1
             except TimeoutError:
                 if not len(received_chunks) == 0 or \

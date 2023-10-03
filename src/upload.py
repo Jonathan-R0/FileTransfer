@@ -74,6 +74,8 @@ def sr_client_upload(
     while attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
+            if(seq_end > 0 and next_seq_num > seq_end):
+                break
             chunk, end = file_handler.read_next_chunk(next_seq_num)
             if end:
                 seq_end = next_seq_num
@@ -114,7 +116,7 @@ def sr_client_upload(
             # Timeout, reenvio todos los paquetes no confirmados
             attempts += 1
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
-                logging.debug('Timeout occurred. Resending ' +
+                logging.debug(' Timeout occurred. Resending ' +
                               'unacknowledged chunks.')
                 for seq, chunk in sent_chunks.items():
                     if seq == seq_end:

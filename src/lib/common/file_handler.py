@@ -28,13 +28,13 @@ class FileHandler:
         return chunk, len(chunk) < self.chunk_size or \
             len(self.file.read(self.chunk_size)) == 0
 
-    def append_chunk(self, chunk: bytes) -> None:
+    def append_chunk(self, chunk: bytes, end: bool) -> None:
         if len(chunk) == 0:
             return
-        try:
-            self.file.write(chunk.decode().rstrip('\0').encode())
-        except Exception:
-            self.file.write(chunk)  # Not a zero ending string.
+        if end:
+            chunk = chunk.rstrip(b'\x00')
+        self.file.write(chunk)
+        print(chunk)
 
     def size(self) -> int:
         return self.len

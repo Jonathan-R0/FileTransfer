@@ -1,4 +1,3 @@
-import logging
 from lib.common.config import DATA_SIZE
 import os
 
@@ -26,7 +25,6 @@ class FileHandler:
     def read_next_chunk(self, seq: int) -> tuple[bytes, bool]:
         self.file.seek((seq - 1) * self.chunk_size)
         chunk = self.file.read(self.chunk_size)
-        #logging.debug(f' Read chunk {chunk} with size: {len(chunk)}')
         return chunk, len(chunk) < self.chunk_size or \
             len(self.file.read(self.chunk_size)) == 0
 

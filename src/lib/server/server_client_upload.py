@@ -43,7 +43,8 @@ class ServerClientUpload(ServerClient):
                 if last_seq > 0:
                     raw_data, \
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, checksum, data = NormalPackage.unpack_from_client(raw_data)
+                _, seq, end, _, checksum, data = \
+                    NormalPackage.unpack_from_client(raw_data)
                 if any(data) and checksum != md5(data).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring...')
@@ -89,7 +90,8 @@ class ServerClientUpload(ServerClient):
             try:
                 # Recibo el paquete
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
-                _, seq, end, _, checksum, data = NormalPackage.unpack_from_client(raw_data)
+                _, seq, end, _, checksum, data = \
+                    NormalPackage.unpack_from_client(raw_data)
                 if any(data) and checksum != md5(data).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring... {any(data)}')
@@ -124,7 +126,8 @@ class ServerClientUpload(ServerClient):
                     self.file.append_chunk(received_chunk)
                     base += 1
             except TimeoutError:
-                if not len(received_chunks) == 0 or (not has_end_pkg and len(received_chunks) == 0):
+                if not len(received_chunks) == 0 or \
+                          (not has_end_pkg and len(received_chunks) == 0):
                     logging.debug(' A timeout has occurred, ' +
                                   'ending connection')
                     self.file_handler.rollback_write()

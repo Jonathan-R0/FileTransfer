@@ -6,7 +6,6 @@ from lib.common.config import (
     NORMAL_PACKAGE_FORMAT,
 )
 from hashlib import md5
-import random
 
 
 class InitialHandshakePackage:

@@ -3,7 +3,6 @@ from lib.server.server_client import ServerClient
 from lib.common.package import AckSeqPackage, NormalPackage
 from lib.common.config import (
     SENDING_TIMEOUT,
-    RECEPTION_TIMEOUT,
     MAX_ATTEMPTS,
     ACK_SEQ_SIZE,
     WINDOW_SIZE,

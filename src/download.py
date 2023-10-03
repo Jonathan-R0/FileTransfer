@@ -39,7 +39,8 @@ def sr_client_download(socket: SocketWrapper,
         try:
             # Recibo el paquete
             raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            _, seq, end, error, checksum, data = NormalPackage.unpack_from_client(raw_data)
+            _, seq, end, error, checksum, data = \
+                NormalPackage.unpack_from_client(raw_data)
             if any(data) and checksum != md5(data).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
@@ -72,7 +73,8 @@ def sr_client_download(socket: SocketWrapper,
                 file_handler.append_chunk(received_chunk)
                 base += 1
         except TimeoutError:
-            if not len(received_chunks) == 0 or (not has_end_pkg and len(received_chunks) == 0):
+            if not len(received_chunks) == 0 or \
+                       (not has_end_pkg and len(received_chunks) == 0):
                 logging.debug(' A timeout has occurred, ' +
                               'ending connection')
             break
@@ -92,7 +94,8 @@ def sw_client_download(
         try:
             if last_seq > 0:
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            ack, seq, end, error, checksum, data = NormalPackage.unpack_from_client(raw_data)
+            ack, seq, end, error, checksum, data = \
+                NormalPackage.unpack_from_client(raw_data)
             if any(data) and checksum != md5(data).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
@@ -189,11 +192,12 @@ if __name__ == '__main__':
             logging.debug(f' File {downloader_args.FILENAME} not found')
             exit(1)
         except OSError:
-            logging.debug(f' File {downloader_args.FILENAME} could not be opened')
+            logging.debug(f' File {downloader_args.FILENAME} could ' +
+                          ' not be opened')
             exit(1)
         except Exception:
             logging.debug(f' File {downloader_args.FILENAME} could not be ' +
-                        'opened, generic exception was raised')
+                          'opened, generic exception was raised')
             exit(1)
 
         # Network Configuration
@@ -206,7 +210,8 @@ if __name__ == '__main__':
         if downloader_args.selective_repeat:
             handshake_sr(socket, arg_addr, handshake_attempts)
         else:
-            raw_data, address = handshake_sw(socket, arg_addr, handshake_attempts)
+            raw_data, address = handshake_sw(socket, arg_addr,
+                                             handshake_attempts)
 
         try:
             if downloader_args.stop_and_wait:
@@ -219,4 +224,3 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logging.debug(' Keyboard Interrupt, ending connection')
         exit(1)
-        

@@ -11,7 +11,6 @@ from lib.common.config import (
     ACK_SEQ_SIZE,
     WINDOW_SIZE,
     SENDING_TIMEOUT,
-    RECEPTION_TIMEOUT,
     MAX_FILE_SIZE
 )
 import logging
@@ -117,7 +116,7 @@ def sr_client_upload(
             attempts += 1
             if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                 logging.debug('Timeout occurred. Resending ' +
-                                'unacknowledged chunks.')
+                              'unacknowledged chunks.')
                 for seq, chunk in sent_chunks.items():
                     if seq == seq_end:
                         end = True
@@ -146,11 +145,12 @@ if __name__ == '__main__':
             logging.debug(f' File {uploader_args.FILENAME} not found')
             exit(1)
         except OSError:
-            logging.debug(f' File {uploader_args.FILENAME} could not be opened')
+            logging.debug(f' File {uploader_args.FILENAME} could ' +
+                          'not be opened')
             exit(1)
         except Exception:
             logging.debug(f' File {uploader_args.FILENAME} could not be ' +
-                        'opened, generic exception was raised')
+                          'opened, generic exception was raised')
             exit(1)
         if file_handler.size() > MAX_FILE_SIZE:
             logging.debug(f' File {uploader_args.FILENAME} is too big')
@@ -170,15 +170,16 @@ if __name__ == '__main__':
         while handshake_attempts < MAX_ATTEMPTS:
             try:
                 socket.sendto(arg_addr,
-                            InitialHandshakePackage.pack_to_send(
+                              InitialHandshakePackage.pack_to_send(
                                 1,
                                 mode,
                                 file_handler.size(),
                                 uploader_args.FILENAME)
-                            )
+                              )
                 raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
                 ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-                logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
+                logging.debug(f' Recieved ack: {ack} & seq: {seq} ' +
+                              f'from {address}')
                 if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
                     break
                 else:
@@ -186,7 +187,7 @@ if __name__ == '__main__':
             except TimeoutError:
                 handshake_attempts += 1
                 logging.debug(f' Handshake attempt {handshake_attempts} ' +
-                            f'to {arg_addr} failed')
+                              f'to {arg_addr} failed')
 
         if handshake_attempts == MAX_ATTEMPTS:
             logging.debug(f' Handshake to {arg_addr} failed')

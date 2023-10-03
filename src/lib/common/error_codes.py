@@ -14,4 +14,5 @@ def handle_error_codes_client(error_code: int) -> None:
     if error_code == FILE_ALREADY_EXISTS_ERROR_CODE:
         logging.debug(" The file you are trying to upload already exists")
     if error_code == TEMP_FILE_ALREADY_EXISTS_ERROR_CODE:
-        logging.debug(" The file you are trying to download is a temporary file")
+        logging.debug(" The file you are trying to download is a " +
+                      "temporary file")

@@ -43,7 +43,8 @@ def sw_client_download(
                 raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+            if any(data) and checksum != \
+                    md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -51,7 +52,7 @@ def sw_client_download(
                 handle_error_codes_client(error)
                 file_handler.rollback_write()
                 socket.sendto(address,
-                            AckSeqPackage.pack_to_send(seq, 0))
+                              AckSeqPackage.pack_to_send(seq, 0))
                 break
             if seq == last_seq + 1:
                 last_seq = seq
@@ -79,7 +80,7 @@ def sw_client_download(
 def sr_client_download(socket: SocketWrapper,
                        file_handler: FileHandler,
                        raw_data: bytes,
-                        address: tuple) -> None:
+                       address: tuple) -> None:
     end = False
     received_chunks = {}
     base = 1
@@ -96,12 +97,13 @@ def sr_client_download(socket: SocketWrapper,
             seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
             if error != 0:
-                    handle_error_codes_client(error)
-                    file_handler.rollback_write()
-                    socket.sendto(address,
+                handle_error_codes_client(error)
+                file_handler.rollback_write()
+                socket.sendto(address,
                               AckSeqPackage.pack_to_send(seq, 0))
-                    break
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+                break
+            if any(data) and checksum != \
+                    md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -124,7 +126,8 @@ def sr_client_download(socket: SocketWrapper,
                               AckSeqPackage.pack_to_send(seq, 0))
                 logging.debug(f' Sending ack for seq: {seq}')
             elif seq < base:
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq , 0))
+                socket.sendto(address,
+                              AckSeqPackage.pack_to_send(seq, 0))
                 logging.debug(f' Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo
@@ -202,9 +205,9 @@ if __name__ == '__main__':
         arg_addr = (downloader_args.ADDR, downloader_args.PORT)
         address = None
         raw_data, address = handshake(socket, arg_addr,
-                                             handshake_attempts)
+                                      handshake_attempts)
 
-        try: 
+        try:
             if downloader_args.stop_and_wait:
                 sw_client_download(socket, file_handler, raw_data, address)
             else:

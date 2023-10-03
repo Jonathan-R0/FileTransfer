@@ -1,6 +1,9 @@
 from lib.common.config import DATA_SIZE
 import os
-from lib.common.exceptions import DownloadingTemporaryFileError, UploadExistingFileError
+from lib.common.exceptions import (
+    DownloadingTemporaryFileError,
+    UploadExistingFileError
+)
 
 
 class FileHandler:
@@ -12,13 +15,14 @@ class FileHandler:
             mode: str,
             chunk_size: int = DATA_SIZE
             ):
-        if mode == 'rb' and filepath.endswith('.tmp') and not is_upload:
+        tmp = '.tmp'
+        if mode == 'rb' and filepath.endswith(tmp) and not is_upload:
             raise DownloadingTemporaryFileError
         if mode == 'wb' and is_upload and \
-            (os.path.exists(filepath) or os.path.exists(filepath + '.tmp')) :
+                (os.path.exists(filepath) or os.path.exists(filepath + tmp)):
             raise UploadExistingFileError
         self.file = open(
-            file=(filepath + '.tmp')
+            file=(filepath + tmp)
             if is_upload and mode == 'wb' else filepath,
             mode=mode)
         self.mode = mode

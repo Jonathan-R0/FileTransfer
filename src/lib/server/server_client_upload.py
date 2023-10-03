@@ -7,7 +7,7 @@ from lib.server.server_client import ServerClient
 from lib.common.config import (
     RECEPTION_TIMEOUT,
     NORMAL_PACKAGE_SIZE,
-    WINDOW_SIZE, 
+    WINDOW_SIZE,
     MAX_ATTEMPTS
 )
 import logging
@@ -49,7 +49,8 @@ class ServerClientUpload(ServerClient):
                         address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+                if any(data) and checksum != \
+                        md5(struct.pack('!256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring...')
                     continue
@@ -98,7 +99,8 @@ class ServerClientUpload(ServerClient):
                 raw_data, address = self.socket.recvfrom(NORMAL_PACKAGE_SIZE)
                 seq, end, _, checksum, data = \
                     NormalPackage.unpack_from_client(raw_data)
-                if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+                if any(data) and checksum != \
+                        md5(struct.pack('!256s', data)).digest():
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring... {any(data)}')
                     continue
@@ -146,5 +148,5 @@ class ServerClientUpload(ServerClient):
         lost_pkg_attempts = 0
         while lost_pkg_attempts < MAX_ATTEMPTS:
             self.socket.sendto(self.address,
-                            AckSeqPackage.pack_to_send(0, error))
+                               AckSeqPackage.pack_to_send(0, error))
             lost_pkg_attempts += 1

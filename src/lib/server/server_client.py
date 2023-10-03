@@ -1,10 +1,13 @@
 import logging
 import threading
 import os
-from lib.common.exceptions import DownloadingTemporaryFileError, UploadExistingFileError
+from lib.common.exceptions import (
+    DownloadingTemporaryFileError,
+    UploadExistingFileError
+)
 
 from lib.common.package import (
-    InitialHandshakePackage, AckSeqPackage, NormalPackage)
+    InitialHandshakePackage, AckSeqPackage)
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.file_handler import FileHandler
 from lib.common.error_codes import (
@@ -13,12 +16,6 @@ from lib.common.error_codes import (
     FILE_ALREADY_EXISTS_ERROR_CODE,
     TEMP_FILE_ALREADY_EXISTS_ERROR_CODE,
     handle_error_codes_client
-)
-
-from lib.common.config import (
-    SENDING_TIMEOUT,
-    ACK_SEQ_SIZE,
-    MAX_ATTEMPTS
 )
 
 
@@ -43,8 +40,7 @@ class ServerClient(threading.Thread):
                                     path,
                                     initial_package.is_upload,
                                     'wb' if initial_package.is_upload else 'rb'
-                                    
-                                )
+                                    )
         except DownloadingTemporaryFileError:
             self.return_error_to_client(TEMP_FILE_ALREADY_EXISTS_ERROR_CODE)
             return

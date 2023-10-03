@@ -74,7 +74,7 @@ def sr_client_upload(
     while attempts <= MAX_ATTEMPTS:
         # Mando paquetes si tengo espacio en la ventana
         while next_seq_num < base + WINDOW_SIZE and not end:
-            if(seq_end > 0 and next_seq_num > seq_end):
+            if (seq_end > 0 and next_seq_num > seq_end):
                 break
             chunk, end = file_handler.read_next_chunk(next_seq_num)
             if end:
@@ -181,7 +181,7 @@ if __name__ == '__main__':
                 if error != 0:
                     handle_error_codes_client(error)
                     socket.sendto(address,
-                              AckSeqPackage.pack_to_send(0, 0))
+                                  AckSeqPackage.pack_to_send(0, 0))
                     exit(1)
                 logging.debug(f' Recieved ack with seq: {seq} ' +
                               f'from {address}')

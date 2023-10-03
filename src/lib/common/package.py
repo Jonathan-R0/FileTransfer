@@ -32,7 +32,7 @@ class InitialHandshakePackage:
 class AckSeqPackage:
 
     @staticmethod
-    def unpack_from_server(data: bytes) -> int:
+    def unpack_from_server(data: bytes) -> tuple[Any, ...]:
         return struct.unpack(ACK_SEQ_FORMAT, data)
 
     @staticmethod

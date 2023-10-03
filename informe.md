@@ -36,6 +36,8 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 
 8. Se pueden tener hasta 100 clientes en procesamiento concurrente.
 
+9. El cliente puede sobreescribir un archivo en su filesystem si hace una descarga de un archivo que ya tiene. Es responsabilidad del mismo chequearlo.
+
 ## **Implementacion**
 
 ### Protocolo 

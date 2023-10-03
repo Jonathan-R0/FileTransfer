@@ -9,7 +9,8 @@ from lib.common.file_handler import FileHandler
 from lib.common.error_codes import (
     FILE_NOT_FOUND_ERROR_CODE,
     FILE_OPENING_OS_ERROR_CODE,
-    FILE_ALREADY_EXISTS_ERROR_CODE
+    FILE_ALREADY_EXISTS_ERROR_CODE,
+    handle_error_codes_client
 )
 
 
@@ -25,6 +26,7 @@ class ServerClient(threading.Thread):
         self.is_saw = initial_package.is_saw
         self.address = address
         self.socket = None
+        self.failed = False
         try:
             path = os.path.join(dirpath, initial_package.file_name
                                                         .decode()
@@ -42,8 +44,12 @@ class ServerClient(threading.Thread):
             self.return_error_to_client(FILE_ALREADY_EXISTS_ERROR_CODE)
 
     def return_error_to_client(self, error: int) -> None:
+        handle_error_codes_client(error)
+        self.failed = True
+        self.create_socket()
         self.socket.sendto(self.address,
-                           NormalPackage.pack_to_send(0, 0, True, error, 0))
+                           NormalPackage.pack_to_send(0, 0, b'ERROR', True, error))
+        self.socket.close()
 
     def create_socket_and_reply_handshake(self) -> None:
         self.create_socket()
@@ -57,4 +63,5 @@ class ServerClient(threading.Thread):
     def end(self) -> None:
         logging.debug(f' Ending client thread: {self.address}')
         self.socket.close()
-        self.file.close()
+        if not self.failed:
+            self.file.close()

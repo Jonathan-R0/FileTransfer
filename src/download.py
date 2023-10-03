@@ -17,6 +17,7 @@ from lib.common.config import (
 from lib.common.file_handler import FileHandler
 import os
 from hashlib import md5
+from lib.common.error_codes import handle_error_codes_client
 
 if downloader_args.verbose:
     logging.basicConfig(level=logging.DEBUG)
@@ -35,12 +36,16 @@ def sr_client_download(socket: SocketWrapper,
     base = 1
     has_end_pkg = False
     socket.set_timeout(RECEPTION_TIMEOUT)
+    address = None
     while True:
         try:
             # Recibo el paquete
             raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             _, seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
+            if error != 0:
+                handle_error_codes_client(error)
+                break
             if any(data) and checksum != md5(data).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
@@ -78,7 +83,8 @@ def sr_client_download(socket: SocketWrapper,
                 logging.debug(' A timeout has occurred, ' +
                               'ending connection')
             break
-    logging.debug(f' Client {address} ended')
+    if address:
+        logging.debug(f' Client {address} ended')
 
 
 def sw_client_download(
@@ -101,6 +107,7 @@ def sw_client_download(
                               f'with seq: {seq}. Ignoring...')
                 continue
             if error != 0:
+                handle_error_codes_client(error)
                 break
             logging.debug(f' Recieved package \n{raw_data}\n from: ' +
                           f'{address} with len {len(raw_data)} and end: {end}')

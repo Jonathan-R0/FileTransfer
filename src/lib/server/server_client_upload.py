@@ -23,6 +23,8 @@ class ServerClientUpload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def run(self) -> None:
+        if self.failed:
+            return
         self.create_socket_and_reply_handshake()
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         try:
@@ -35,6 +37,8 @@ class ServerClientUpload(ServerClient):
         self.sw_upload(raw_data, address) if self.is_saw else self.sr_upload()
 
     def sw_upload(self, raw_data: bytes, address: tuple) -> None:
+        if self.failed:
+            return
         end = False
         last_seq = 0
         self.socket.set_timeout(RECEPTION_TIMEOUT)
@@ -81,6 +85,8 @@ class ServerClientUpload(ServerClient):
         self.end()
 
     def sr_upload(self) -> None:
+        if self.failed:
+            return
         end = False
         received_chunks = {}
         base = 1

@@ -20,7 +20,9 @@ class ServerClientDownload(ServerClient):
         super().__init__(initial_package, address, dirpath)
 
     def run(self) -> None:
-        if self.is_saw:
+        if self.failed:
+            return
+        elif self.is_saw:
             self.create_socket()
             self.sw_download()
         else:
@@ -28,6 +30,8 @@ class ServerClientDownload(ServerClient):
             self.sr_download()
 
     def sw_download(self):
+        if self.failed:
+            return
         end = False
         ack = 0
         seq = 1
@@ -67,6 +71,8 @@ class ServerClientDownload(ServerClient):
         self.end()
 
     def sr_download(self):
+        if self.failed:
+            return
         end = False
         seq = 1
         next_seq_num = 1

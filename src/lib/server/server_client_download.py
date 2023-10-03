@@ -84,8 +84,6 @@ class ServerClientDownload(ServerClient):
                 if(seq_end > 0 and next_seq_num > seq_end):
                     break
                 chunk, end = self.file.read_next_chunk(next_seq_num)
-                if len(chunk) == 0:
-                    break
                 if end:
                     seq_end = next_seq_num
 

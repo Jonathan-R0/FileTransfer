@@ -6,6 +6,11 @@ from lib.common.package import (
     InitialHandshakePackage, AckSeqPackage, NormalPackage)
 from lib.common.socket_wrapper import SocketWrapper
 from lib.common.file_handler import FileHandler
+from lib.common.error_codes import (
+    FILE_NOT_FOUND_ERROR_CODE,
+    FILE_OPENING_OS_ERROR_CODE,
+    FILE_ALREADY_EXISTS_ERROR_CODE
+)
 
 
 class ServerClient(threading.Thread):
@@ -30,15 +35,11 @@ class ServerClient(threading.Thread):
                                     'wb' if initial_package.is_upload else 'rb'
                                 )
         except FileNotFoundError:
-            self.return_error_to_client(404)
+            self.return_error_to_client(FILE_NOT_FOUND_ERROR_CODE)
         except OSError:
-            self.return_error_to_client(500)
+            self.return_error_to_client(FILE_OPENING_OS_ERROR_CODE)
         except ValueError:
-            self.return_error_to_client(404)
-
-        # TODO cambiar los errores para que no matcheen los codigos de error
-        # http mas que nada para evitar quejas por implementar algo de una
-        # capa superior.
+            self.return_error_to_client(FILE_ALREADY_EXISTS_ERROR_CODE)
 
     def return_error_to_client(self, error: int) -> None:
         self.socket.sendto(self.address,

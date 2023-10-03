@@ -62,7 +62,7 @@ En este contexto, el número de secuencia se establece en 0, indicando que este 
 
 #### **Transferencia de Archivos mediante Segmentación de Datos y Paquetes**
 
-En el contexto de la transferencia de archivos, la información se segmenta en paquetes de 281 bytes, adaptándose dinámicamente al tamaño total de los datos. Estos paquetes se envían al servidor o al cliente, quienes los reciben y los almacenan en un archivo correspondiente. Una vez que se ha completado el proceso de Handshake y se ha establecido la conexión segura, la transferencia de archivos tiene lugar. Los paquetes que contienen datos están estructurados de la siguiente manera:
+En el contexto de la transferencia de archivos, la información se segmenta en paquetes de 281 bytes, adaptándose dinámicamente al tamaño total de los datos. Estos paquetes se envían al servidor o al cliente, quienes los reciben y los almacenan en un archivo correspondiente. Una vez que se ha completado el proceso de Handshake y se ha establecido la conexión segura, se procede a la transferencia de archivos. Los paquetes que contienen datos están estructurados de la siguiente manera:
 
 1. **SEQ (Sequence Number)**: Cuatro bytes que indican el número de secuencia del paquete, identificando su posición en la secuencia de datos.
 2. **END (End of File)**: Un byte que indica si este es el último paquete de la secuencia o si hay más por seguir.
@@ -106,11 +106,13 @@ ACA van las pruebassssssssssssssssssssssssssssssss XD
 
 ### Arquitectura Cliente Servidor
 
-La arquitectura cliente servidor consiste de tener un proceso ejecutandose constantemente en el servidor la cual recibe requests de otros procesos que se ejecutan en un cliente. El cliente está preparado para saber comunicarse con el servidor mediante un protocolo preestablecido. El ciclo de vida de interacciones consiste de que se establezca una conexión y el servidor pueda responder las consultas que le realice el proceso cliente
+La arquitectura cliente servidor consiste de tener un proceso ejecutandose constantemente en el servidor la cual recibe requests de otros procesos que se ejecutan en un cliente. El cliente está preparado para saber comunicarse con el servidor mediante un protocolo preestablecido. El ciclo de vida de interacciones consiste de que se establezca una conexión y el servidor pueda responder las consultas que le realice el proceso cliente.
 
-### La Función de un Protocolo de Capa de Aplicacion
+El servidor posee un hilo aceptador que, como el nombre indica, escucha nuevas solicitudes de comunicación de clientes. Por cada uno de estos mensajes iniciales, el hilo aceptador verifica que el cliente que envió el mensaje no haya sido procesado, y en tal caso lanza un hilo de ejecución concurrente para establecer la comunicación segura con el mismo. Cada hilo posee su propio socket y el cliente, al recibir la respuesta del handshake desde este nuevo socket, cambia la dirección de comunicación para hablar directamente con su hilo.
 
-La función de un protocolo de capa de aplicacion es comunicar distintos hosts a traves de la red. Establece la comunicacion entre los end hosts. 
+### La Función de un Protocolo de Capa de Aplicación
+
+La función de un protocolo de capa de aplicación es comunicar distintos hosts a traves de la red. Establece la comunicacion entre los end hosts.
 
 ### Protocolo utilizado
 

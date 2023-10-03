@@ -1,7 +1,7 @@
 import logging
 import threading
 import os
-from lib.common.exceptions import DownloadingTemporaryFileError
+from lib.common.exceptions import DownloadingTemporaryFileError, UploadExistingFileError
 
 from lib.common.package import (
     InitialHandshakePackage, AckSeqPackage, NormalPackage)
@@ -43,36 +43,32 @@ class ServerClient(threading.Thread):
                                     path,
                                     initial_package.is_upload,
                                     'wb' if initial_package.is_upload else 'rb'
+                                    
                                 )
-        except FileNotFoundError:
-            self.return_error_to_client(FILE_NOT_FOUND_ERROR_CODE)
-        except OSError:
-            self.return_error_to_client(FILE_OPENING_OS_ERROR_CODE)
-        except ValueError:
-            self.return_error_to_client(FILE_ALREADY_EXISTS_ERROR_CODE)
         except DownloadingTemporaryFileError:
             self.return_error_to_client(TEMP_FILE_ALREADY_EXISTS_ERROR_CODE)
+            return
+        except UploadExistingFileError:
+            self.return_error_to_client(FILE_ALREADY_EXISTS_ERROR_CODE)
+            return
+        except FileNotFoundError:
+            self.return_error_to_client(FILE_NOT_FOUND_ERROR_CODE)
+            return
+        except OSError:
+            self.return_error_to_client(FILE_OPENING_OS_ERROR_CODE)
+            return
 
     def return_error_to_client(self, error: int) -> None:
         handle_error_codes_client(error)
         self.failed = True
         self.create_socket()
-        self.socket.set_timeout(SENDING_TIMEOUT)
-        lost_pkg_attempts = 0
-        while lost_pkg_attempts < MAX_ATTEMPTS:
-            try:
-                self.socket.sendto(self.address,
-                                NormalPackage.pack_to_send(0, b'ERROR', True, error))
-                _, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
-            except TimeoutError:
-                lost_pkg_attempts += 1
-
+        self.send_error_to_client(error)
         self.socket.close()
 
     def create_socket_and_reply_handshake(self) -> None:
         self.create_socket()
         logging.debug(f' Replying to handshake from: {self.address}')
-        self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0))
+        self.socket.sendto(self.address, AckSeqPackage.pack_to_send(0, 0))
 
     def create_socket(self) -> None:
         self.socket = SocketWrapper()

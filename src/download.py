@@ -49,13 +49,15 @@ def sw_client_download(
                 continue
             if error != 0:
                 handle_error_codes_client(error)
+                socket.sendto(address,
+                            AckSeqPackage.pack_to_send(seq, 0))
                 break
             if seq == last_seq + 1:
                 last_seq = seq
                 file_handler.append_chunk(data, end)
                 logging.debug(f' Recieved package from: {address} with ' +
                               f'seq: {seq} and end: {end}')
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq))
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq, 0))
             else:
                 logging.debug(
                     f' Recieved package from: {address} with seq: ' +
@@ -63,7 +65,7 @@ def sw_client_download(
                 )
                 socket.sendto(
                     address,
-                    AckSeqPackage.pack_to_send(last_seq)
+                    AckSeqPackage.pack_to_send(last_seq, 0)
                 )
         except TimeoutError:
             if not end:
@@ -93,8 +95,10 @@ def sr_client_download(socket: SocketWrapper,
             seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
             if error != 0:
-                handle_error_codes_client(error)
-                break
+                    handle_error_codes_client(error)
+                    socket.sendto(address,
+                              AckSeqPackage.pack_to_send(seq, 0))
+                    break
             if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
@@ -110,15 +114,15 @@ def sr_client_download(socket: SocketWrapper,
             if seq not in received_chunks and base <= seq < base + WINDOW_SIZE:
                 received_chunks[seq] = data
                 socket.sendto(address,
-                              AckSeqPackage.pack_to_send(seq))
+                              AckSeqPackage.pack_to_send(seq, 0))
                 logging.debug(f' Sending ack for seq: {seq}')
             elif seq in received_chunks:
                 # Si ya tenia el paquete, mando confirmacion de nuevo
                 socket.sendto(address,
-                              AckSeqPackage.pack_to_send(seq))
+                              AckSeqPackage.pack_to_send(seq, 0))
                 logging.debug(f' Sending ack for seq: {seq}')
             elif seq < base:
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq))
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq , 0))
                 logging.debug(f' Sending ack for seq: {seq}')
             # Chequeo si el paquete esta en sequencia
             # y lo agrego al archivo

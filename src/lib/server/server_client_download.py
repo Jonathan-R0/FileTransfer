@@ -49,7 +49,7 @@ class ServerClientDownload(ServerClient):
                 )
                 while True:
                     raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
-                    new_seq = \
+                    new_seq, _ = \
                         AckSeqPackage.unpack_from_client(raw_data)
                     if new_seq == 1:
                         logging.debug(f' New client: {self.address}')
@@ -103,7 +103,7 @@ class ServerClientDownload(ServerClient):
             try:
                 # Ahora recibo un ACK
                 raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
-                seq = AckSeqPackage.unpack_from_server(raw_data)
+                seq, _ = AckSeqPackage.unpack_from_server(raw_data)
                 if first_iteration:
                     first_iteration = False
                     logging.debug(f' New client: {self.address}')
@@ -147,3 +147,14 @@ class ServerClientDownload(ServerClient):
                     break
         logging.debug(f' Client {self.address} ended')
         self.end()
+
+    def send_error_to_client(self, error: int) -> None:
+        self.socket.set_timeout(SENDING_TIMEOUT)
+        lost_pkg_attempts = 0
+        while lost_pkg_attempts < MAX_ATTEMPTS:
+            try:
+                self.socket.sendto(self.address,
+                                NormalPackage.pack_to_send(0, b'ERROR', True, error))
+                _, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
+            except TimeoutError:
+                lost_pkg_attempts += 1

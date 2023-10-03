@@ -137,7 +137,6 @@ class ServerClientDownload(ServerClient):
                             )
                         self.socket.sendto(self.address, packet)
                 else:
-                    ("aca")
                     break
         logging.debug(f' Client {self.address} ended')
         self.end()

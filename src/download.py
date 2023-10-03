@@ -33,6 +33,7 @@ def sr_client_download(socket: SocketWrapper,
     end = False
     received_chunks = {}
     base = 1
+    has_end_pkg = False
     socket.set_timeout(RECEPTION_TIMEOUT)
     while True:
         try:
@@ -43,6 +44,8 @@ def sr_client_download(socket: SocketWrapper,
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
+            if end:
+                has_end_pkg = True
             logging.debug(f'Received package from: {address} with seq:' +
                           f' {seq} and end: {end} with len {len(data)}')
 
@@ -69,6 +72,9 @@ def sr_client_download(socket: SocketWrapper,
                 file_handler.append_chunk(received_chunk)
                 base += 1
         except TimeoutError:
+            if not len(received_chunks) == 0 or (not has_end_pkg and len(received_chunks) == 0):
+                logging.debug(' A timeout has occurred, ' +
+                              'ending connection')
             break
     logging.debug(f' Client {address} ended')
 

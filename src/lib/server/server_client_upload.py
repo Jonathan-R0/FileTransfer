@@ -83,6 +83,7 @@ class ServerClientUpload(ServerClient):
         end = False
         received_chunks = {}
         base = 1
+        has_end_pkg = False
         self.socket.set_timeout(RECEPTION_TIMEOUT)
         while True:
             try:
@@ -93,6 +94,8 @@ class ServerClientUpload(ServerClient):
                     logging.debug(' Checksum error for package ' +
                                   f'with seq: {seq}. Ignoring... {any(data)}')
                     continue
+                if end:
+                    has_end_pkg = True
                 logging.debug(f'Received package from: {address} with seq:' +
                               f' {seq} and end: {end} with len {len(data)}')
 
@@ -121,9 +124,9 @@ class ServerClientUpload(ServerClient):
                     self.file.append_chunk(received_chunk)
                     base += 1
             except TimeoutError:
-                if not end:
+                if not len(received_chunks) == 0 or (not has_end_pkg and len(received_chunks) == 0):
                     logging.debug(' A timeout has occurred, ' +
-                                'ending connection and deleting corrupted file')
+                                  'ending connection')
                     self.file_handler.rollback_write()
                 break
         logging.debug(f' Client {self.address} ended')

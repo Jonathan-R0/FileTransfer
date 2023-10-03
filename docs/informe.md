@@ -78,7 +78,7 @@ Es esencial destacar que, aunque reenviar el paquete es una práctica común par
 
 ### **Manejo de Errores en el protocolo**
 
-A través del campo ERROR de los paquetes de archivos y de los ACK, se mandan distintos códigos de error desde el servidor para que el cliente corte su ejecución y no hayan problemas de concurrencia en el servidor. A continuación plantearemos los que consideramos:
+A través del campo ERROR de los paquetes de archivos y de los ACK, se mandan distintos códigos de error desde el servidor para que el cliente corte su ejecución y no hayan problemas de concurrencia en el servidor. Estos errores se informan en la primera respuesta al inicio del handshake, es decir, el primer paquete que envia el listener. A continuación plantearemos los que consideramos:
 
 1. **FILE_NOT_FOUND_ERROR_CODE**: Si se quiere descargar un archivo que no existe en la carpeta donde apunta el FileServer.
 2. **FILE_OPENING_OS_ERROR_CODE**: Si ocurrió un error al abrir el archivo en la descarga.
@@ -102,7 +102,19 @@ En situaciones donde el receptor recibe un paquete duplicado, reenvía el acknow
 
 ## Pruebas
 
-ACA van las pruebassssssssssssssssssssssssssssssss XD
+La subida de un archivo de 5mb, utilizando selective repeat con 10% de packet loss tarda aproximadamente 26,6 segundos. En cambio la descarga de 5mb, utilizando selective repeat con 10% de packet loss tarda aproximadamente 31,2 segundos.
+
+![SR with loss](./srwithloss.png)
+
+Vemos en la captura de pantalla como fue la ejecución de los comandos. Se puede visualizar a su vez el resultado del diff y el chequeo del hash de cada archivo utilizando md5. En la terminal de la derecha se ve como ejecutamos el servidor y como estaba activado el packet loss.
+
+![SR with no loss](./srwithoutloss.png)
+
+Posteriormente habiendo desactivado el packet loss, volvemos a realizar la subida y bajada de archivos. Se utiliza nuevamente los mismos archivos de 5mb. La subida y descarga tardan aproximadamente 17 y 18,9 segundos respectivamente.
+
+![SR with no loss and verbose](./srwithoutlossverbose.png)
+
+Finalmente vemos en esta ejecución un upload sin packet loss y en modo verbose. El mismo tarda aproximadamente 19,2 segundos.
 
 ## Preguntas
 

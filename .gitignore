@@ -162,7 +162,6 @@ cython_debug/
 
 .idea
 
-/clientmedia/hasbu.jpeg
-/clientmedia/dataxd
+/clientmedia/file1
 
-/servermedia/bicho.jpg
+/servermedia/file2

@@ -44,6 +44,8 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 
 Para llevar a cabo una transferencia de archivos eficiente, es imperativo contar con un protocolo de envío de datos sólido, especialmente al utilizar el Protocolo de Datagramas de Usuario (UDP). UDP es un protocolo de comunicación sin conexión que no garantiza la entrega de los datos ni confirma su recepción. En este contexto, implementar un protocolo de envío se vuelve crucial para asegurar la integridad y confiabilidad de los datos transferidos. Este protocolo establece las reglas y formatos que deben seguir los datos durante su transmisión, lo que proporciona una estructura coherente para el proceso de envío y recepción. Así, al contar con un protocolo de envío adecuado para los datos en una conexión UDP, se maximiza la eficiencia y se garantiza la llegada segura de la información a su destino.
 
+Particularmente no enviamos el ACK en los paquetes normales del selective repeat. Esto es asi dado que el ACK es necesario para el protocolo de stop and wait.
+
 #### **Handshake**
 
 El proceso de Handshake desempeña un papel crucial en las transferencias de archivos a través de conexiones UDP, proporcionando un método estructurado y confiable para la comunicación entre el cliente y el servidor. Este protocolo se caracteriza por un intercambio bidireccional de mensajes entre ambas partes, estableciendo así una conexión segura antes de la transmisión de datos. Durante el Handshake, el cliente inicia el proceso enviando un mensaje al servidor, quien, a su vez, responde con un acknowledgment. Es esencial destacar que el cliente aguarda este acknowledgment del servidor para proceder con el envío o la descarga del archivo correspondiente.

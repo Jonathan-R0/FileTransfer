@@ -95,7 +95,8 @@ def sr_client_download(socket: SocketWrapper,
             if error != 0:
                 handle_error_codes_client(error)
                 break
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+            if any(data) and checksum != md5(struct.pack('!256s',
+                                             data)).digest():
                 logging.debug(' Checksum error for package ' +
                               f'with seq: {seq}. Ignoring...')
                 continue
@@ -131,6 +132,7 @@ def sr_client_download(socket: SocketWrapper,
             if len(received_chunks) != 0 or \
                        (not has_end_pkg and len(received_chunks) == 0):
                 logging.debug(' A timeout has occurred, ' +
+
                               'ending connection and deleting corrupted file')
                 file_handler.rollback_write()
             break

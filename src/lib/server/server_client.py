@@ -66,7 +66,6 @@ class ServerClient(threading.Thread):
                 _, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
             except TimeoutError:
                 lost_pkg_attempts += 1
-
         self.socket.close()
 
     def create_socket_and_reply_handshake(self) -> None:

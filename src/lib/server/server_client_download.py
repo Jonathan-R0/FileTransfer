@@ -122,7 +122,6 @@ class ServerClientDownload(ServerClient):
                 if seq in sent_chunks:
                     attempts = 0
                     del sent_chunks[seq]
-                print("A")
 
             except TimeoutError:
                 if first_iteration:

@@ -22,11 +22,10 @@ class ServerClientDownload(ServerClient):
     def run(self) -> None:
         if self.failed:
             return
-        elif self.is_saw:
-            self.create_socket()
+        self.create_socket()
+        if self.is_saw:
             self.sw_download()
         else:
-            self.create_socket_and_reply_handshake()
             self.sr_download()
 
     def sw_download(self):
@@ -62,7 +61,7 @@ class ServerClientDownload(ServerClient):
                         ack += 1
                         break
             except TimeoutError:
-                if (ack == 0):
+                if (seq == 1):
                     self.end()
                     return
                 lost_pkg_attempts += 1
@@ -82,6 +81,7 @@ class ServerClientDownload(ServerClient):
         attempts = 0
         seq_end = 0
         self.socket.set_timeout(SENDING_TIMEOUT)
+        first_iteration = True
         while attempts <= MAX_ATTEMPTS:
             # Mando paquetes si tengo espacio en la ventana
             while next_seq_num < base + WINDOW_SIZE and not end:
@@ -107,6 +107,9 @@ class ServerClientDownload(ServerClient):
                 # Ahora recibo un ACK
                 raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
                 ack, seq = AckSeqPackage.unpack_from_server(raw_data)
+                if first_iteration:
+                    first_iteration = False
+                    logging.debug(f' New client: {self.address}')
                 logging.debug(f' Recieved ack: {ack} and seq: {seq}')
 
                 # Como recibi un ACK, muevo la ventana
@@ -124,6 +127,9 @@ class ServerClientDownload(ServerClient):
                     del sent_chunks[seq]
 
             except TimeoutError:
+                if first_iteration:
+                    self.end()
+                    return
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
                 if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:

@@ -30,18 +30,66 @@ def comp_host(host1: str, host2: str) -> bool:
         (host1 in local_host_addr and host2 in local_host_addr)
 
 
+def sw_client_download(
+        socket: SocketWrapper,
+        file_handler: FileHandler,
+        raw_data: bytes,
+        address: tuple
+        ) -> None:
+    end = False
+    last_seq = 0
+    while True:
+        try:
+            if last_seq > 0:
+                raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+            ack, seq, end, error, checksum, data = \
+                NormalPackage.unpack_from_client(raw_data)
+            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
+                logging.debug(' Checksum error for package ' +
+                              f'with seq: {seq}. Ignoring...')
+                continue
+            if error != 0:
+                handle_error_codes_client(error)
+                break
+            if seq == last_seq + 1 and ack == last_seq:
+                last_seq = seq
+                file_handler.append_chunk(data)
+                logging.debug(f' Recieved package from: {address} with ' +
+                              f'seq: {seq} and end: {end}')
+                socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
+            else:
+                logging.debug(
+                    f' Recieved package from: {address} with seq: ' +
+                    f'{seq} and end: {end} but missed previous package'
+                )
+                socket.sendto(
+                    address,
+                    AckSeqPackage.pack_to_send(last_seq, last_seq)
+                )
+        except TimeoutError:
+            if not end:
+                logging.debug(' A timeout has occurred, ' +
+                              'ending connection and deleting corrupted file')
+                file_handler.rollback_write()
+            break
+
+
 def sr_client_download(socket: SocketWrapper,
-                       file_handler: FileHandler) -> None:
+                       file_handler: FileHandler,
+                       raw_data: bytes,
+                        address: tuple) -> None:
     end = False
     received_chunks = {}
     base = 1
     has_end_pkg = False
-    socket.set_timeout(RECEPTION_TIMEOUT)
-    address = None
+    first_iteration = True
     while True:
         try:
             # Recibo el paquete
-            raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
+            if first_iteration:
+                first_iteration = False
+            else:
+                raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
             _, seq, end, error, checksum, data = \
                 NormalPackage.unpack_from_client(raw_data)
             if error != 0:
@@ -88,52 +136,7 @@ def sr_client_download(socket: SocketWrapper,
         logging.debug(f' Client {address} ended')
 
 
-def sw_client_download(
-        socket: SocketWrapper,
-        file_handler: FileHandler,
-        raw_data: bytes,
-        address: tuple
-        ) -> None:
-    end = False
-    last_seq = 0
-    socket.set_timeout(RECEPTION_TIMEOUT)
-    while True:
-        try:
-            if last_seq > 0:
-                raw_data, address = socket.recvfrom(NORMAL_PACKAGE_SIZE)
-            ack, seq, end, error, checksum, data = \
-                NormalPackage.unpack_from_client(raw_data)
-            if any(data) and checksum != md5(struct.pack('!256s', data)).digest():
-                logging.debug(' Checksum error for package ' +
-                              f'with seq: {seq}. Ignoring...')
-                continue
-            if error != 0:
-                handle_error_codes_client(error)
-                break
-            if seq == last_seq + 1 and ack == last_seq:
-                last_seq = seq
-                file_handler.append_chunk(data)
-                logging.debug(f' Recieved package from: {address} with ' +
-                              f'seq: {seq} and end: {end}')
-                socket.sendto(address, AckSeqPackage.pack_to_send(seq, seq))
-            else:
-                logging.debug(
-                    f' Recieved package from: {address} with seq: ' +
-                    f'{seq} and end: {end} but missed previous package'
-                )
-                socket.sendto(
-                    address,
-                    AckSeqPackage.pack_to_send(last_seq, last_seq)
-                )
-        except TimeoutError:
-            if not end:
-                logging.debug(' A timeout has occurred, ' +
-                              'ending connection and deleting corrupted file')
-                file_handler.rollback_write()
-            break
-
-
-def handshake_sw(
+def handshake(
         socket: SocketWrapper,
         arg_addr: tuple,
         handshake_attempts: int
@@ -158,36 +161,6 @@ def handshake_sw(
         logging.debug(f' Handshake to {arg_addr} failed')
         exit(1)
     return raw_data, address
-
-
-def handshake_sr(
-        socket: SocketWrapper,
-        arg_addr: tuple,
-        handshake_attempts: int
-        ) -> None:
-    while handshake_attempts < MAX_ATTEMPTS:
-        try:
-            socket.sendto(arg_addr,
-                          InitialHandshakePackage.pack_to_send(
-                            0,
-                            0,
-                            0,
-                            downloader_args.FILENAME)
-                          )
-            raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
-            ack, seq = AckSeqPackage.unpack_from_client(raw_data)
-            logging.debug(f' Recieved ack: {ack} & seq: {seq} from {address}')
-            if seq == ack == 0 and comp_host(address[0], arg_addr[0]):
-                break
-            else:
-                handshake_attempts += 1
-        except TimeoutError:
-            handshake_attempts += 1
-            logging.debug(f' Handshake attempt {handshake_attempts} ' +
-                          f'to {arg_addr} failed')
-    if handshake_attempts == MAX_ATTEMPTS:
-        logging.debug(f' Handshake to {arg_addr} failed')
-        exit(1)
 
 
 if __name__ == '__main__':
@@ -215,17 +188,14 @@ if __name__ == '__main__':
         handshake_attempts = 0
         arg_addr = (downloader_args.ADDR, downloader_args.PORT)
         address = None
-        if downloader_args.selective_repeat:
-            handshake_sr(socket, arg_addr, handshake_attempts)
-        else:
-            raw_data, address = handshake_sw(socket, arg_addr,
+        raw_data, address = handshake(socket, arg_addr,
                                              handshake_attempts)
 
-        try:
+        try: 
             if downloader_args.stop_and_wait:
                 sw_client_download(socket, file_handler, raw_data, address)
             else:
-                sr_client_download(socket, file_handler)
+                sr_client_download(socket, file_handler, raw_data, address)
         finally:
             file_handler.close()
             socket.close()

@@ -13,6 +13,7 @@ from lib.common.config import (
     SENDING_TIMEOUT,
     MAX_FILE_SIZE
 )
+from lib.common.error_codes import handle_error_codes_client
 import logging
 import os
 
@@ -44,7 +45,7 @@ def sw_client_upload(
                           chunk, end, 0))
             while True:
                 raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-                new_seq = AckSeqPackage.unpack_from_server(raw_data)
+                new_seq, _ = AckSeqPackage.unpack_from_server(raw_data)
                 logging.debug(f' Recieved ack with seq: {new_seq}')
                 if new_seq == seq:
                     lost_pkg_attempts = 0
@@ -94,7 +95,7 @@ def sr_client_upload(
         try:
             # Ahora recibo un ACK
             raw_data, _ = socket.recvfrom(ACK_SEQ_SIZE)
-            seq = AckSeqPackage.unpack_from_server(raw_data)
+            seq, _ = AckSeqPackage.unpack_from_server(raw_data)
             logging.debug(f' Recieved ack with seq: {seq}')
 
             # Como recibi un ACK, muevo la ventana
@@ -176,7 +177,12 @@ if __name__ == '__main__':
                                 uploader_args.FILENAME)
                               )
                 raw_data, address = socket.recvfrom(ACK_SEQ_SIZE)
-                seq = AckSeqPackage.unpack_from_client(raw_data)
+                seq, error = AckSeqPackage.unpack_from_client(raw_data)
+                if error != 0:
+                    handle_error_codes_client(error)
+                    socket.sendto(address,
+                              AckSeqPackage.pack_to_send(0, 0))
+                    exit(1)
                 logging.debug(f' Recieved ack with seq: {seq} ' +
                               f'from {address}')
                 if seq == 0 and comp_host(address[0], arg_addr[0]):

@@ -19,24 +19,22 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 
 1. No se pueden realizar descargas de archivos que no existen en el servidor o que esten siendo utilizados por otro cliente (escritura).
 
-2. Si se carga un archivo con un nombre que ya existe en el servidor, este será reemplazado por el nuevo archivo.
+2. Si en el cliente se encuentra un archivo y se quiere descargar del servidor un archivo con el mismo nombre, se pisa el archivo en el cliente.
 
-3. Si en el cliente se encuentra un archivo y se quiere descargar del servidor un archivo con el mismo nombre, se pisa el archivo en el cliente.
+3. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
 
-4. Si la descarga desde el servidor al cliente se interrumpe, el cliente se quedara con un archivo incompleto. No así, en la carga del cliente al servidor, ya que el servidor descarta el archivo incompleto.
+4. El tamaño máximo que puede tener un archivo es de 50mb.
 
-5. El tamaño máximo que puede tener un archivo es de 50mb.
-
-6. Los paquetes tienen un tamaño de:
+5. Los paquetes tienen un tamaño de:
     a. Initial Message: 262 bytes
     b. ACK-SEQ Package: 8 bytes
     c. Data Package: 281 bytes
 
-7. El tamaño de la ventana para selective repeat es de 1000 paquetes.
+6. El tamaño de la ventana para selective repeat es de 1000 paquetes.
 
-8. El tamaño máximo del nombre de un archivo es de 256 bytes.
+7. El tamaño máximo del nombre de un archivo es de 256 bytes.
 
-9. Se pueden tener hasta 100 clientes en procesamiento concurrente.
+8. Se pueden tener hasta 100 clientes en procesamiento concurrente.
 
 ## **Implementacion**
 
@@ -55,7 +53,10 @@ El formato del mensaje inicial se compone de 262 bytes, divididos en un encabeza
 3. **Tamaño del Archivo**: Cuatro bytes que indican el tamaño del archivo que se va a enviar.
 4. **Nombre del Archivo**: Doscientos cincuenta y seis bytes que contienen el nombre del archivo a ser transferido.
 
-Si fuera una carga, el servidor, en respuesta al mensaje del cliente, emite un acknowledgment de 4 bytes, que consta de un numero de secuencia.
+Si fuera una carga, el servidor, en respuesta al mensaje del cliente, emite un acknowledgment de 8 bytes que consta de lo siguiente:
+
+1. **SEQ (Sequence Number)**: Cuatro bytes que indican el número de secuencia del paquete, identificando su posición en la secuencia de datos.
+2. **ERROR (Error Code)**: Cuatro bytes que señalan si ha ocurrido algún error durante la transferencia, proporcionando un código específico para identificar el tipo de error.
 
 En este contexto, el número de secuencia se establece en 0, indicando que este es el primer mensaje que se envía en la transacción. Este enfoque estructurado y formal en el intercambio de información garantiza una transferencia de archivos segura y confiable a través de conexiones UDP.
 
@@ -72,6 +73,15 @@ En el contexto de la transferencia de archivos, la información se segmenta en p
 Estos paquetes son transmitidos al servidor o al cliente, quienes los reciben y los almacenan en un archivo local. Una vez que el paquete es recibido con éxito, el cliente o el servidor envía un acknowledgment al otro para confirmar la recepción correcta del paquete. En el caso de que el paquete no llegue correctamente, el cliente o el servidor no emite el acknowledgment, lo que indica al host emisor que debe reenviar el paquete para garantizar una transferencia sin errores.
 
 Es esencial destacar que, aunque reenviar el paquete es una práctica común para asegurar la integridad de la transferencia, se establece un límite máximo de intentos para evitar posibles bucles infinitos. Cuando se alcanza este límite, se concluye la transferencia, asegurando así un manejo efectivo de los errores y una transmisión segura y eficiente de los archivos entre el cliente y el servidor.
+
+### **Manejo de Errores en el protocolo**
+
+A través del campo ERROR de los paquetes de archivos y de los ACK, se mandan distintos códigos de error desde el servidor para que el cliente corte su ejecución y no hayan problemas de concurrencia en el servidor. A continuación plantearemos los que consideramos:
+
+1. **FILE_NOT_FOUND_ERROR_CODE**: Si se quiere descargar un archivo que no existe en la carpeta donde apunta el FileServer.
+2. **FILE_OPENING_OS_ERROR_CODE**: Si ocurrió un error al abrir el archivo en la descarga.
+3. **FILE_ALREADY_EXISTS_ERROR_CODE**: Si se quiere cargar un archivo que ya existe en la carpeta donde apunta el FileServer.
+4. **TEMP_FILE_ALREADY_EXISTS_ERROR_CODE**: Si se quiere cargar un archivo que otro usuario esta descargando en el momento (Se crean archivos temporales antes de cargarlos en el server)
 
 
 ### **Implementación de Stop and Wait y Selective Repeat en el Protocolo de Transferencia de Archivos**

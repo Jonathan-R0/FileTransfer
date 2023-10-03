@@ -7,7 +7,8 @@ from lib.server.server_client import ServerClient
 from lib.common.config import (
     RECEPTION_TIMEOUT,
     NORMAL_PACKAGE_SIZE,
-    WINDOW_SIZE
+    WINDOW_SIZE, 
+    MAX_ATTEMPTS
 )
 import logging
 from hashlib import md5
@@ -62,7 +63,7 @@ class ServerClientUpload(ServerClient):
                     )
                     self.socket.sendto(
                         address,
-                        AckSeqPackage.pack_to_send(seq)
+                        AckSeqPackage.pack_to_send(seq, 0)
                     )
                 else:
                     logging.debug(
@@ -71,7 +72,7 @@ class ServerClientUpload(ServerClient):
                     )
                     self.socket.sendto(
                         address,
-                        AckSeqPackage.pack_to_send(last_seq)
+                        AckSeqPackage.pack_to_send(last_seq, 0)
                     )
             except TimeoutError:
                 if not end:
@@ -113,16 +114,16 @@ class ServerClientUpload(ServerClient):
                         base <= seq < base + WINDOW_SIZE:
                     received_chunks[seq] = data
                     self.socket.sendto(address,
-                                       AckSeqPackage.pack_to_send(seq))
+                                       AckSeqPackage.pack_to_send(seq, 0))
                     logging.debug(f' Sending ack for seq: {seq}')
                 elif seq in received_chunks:
                     # Si ya tenia el paquete, mando confirmacion de nuevo
                     self.socket.sendto(address,
-                                       AckSeqPackage.pack_to_send(seq))
+                                       AckSeqPackage.pack_to_send(seq, 0))
                     logging.debug(f' Sending ack for seq: {seq}')
                 elif seq < base:
                     self.socket.sendto(self.address,
-                                       AckSeqPackage.pack_to_send(seq))
+                                       AckSeqPackage.pack_to_send(seq, 0))
                     logging.debug(f' Sending ack for seq: {seq}')
                 # Chequeo si el paquete esta en sequencia
                 # y lo agrego al archivo
@@ -140,3 +141,10 @@ class ServerClientUpload(ServerClient):
                 break
         logging.debug(f' Client {self.address} ended')
         self.end()
+
+    def send_error_to_client(self, error: int) -> None:
+        lost_pkg_attempts = 0
+        while lost_pkg_attempts < MAX_ATTEMPTS:
+            self.socket.sendto(self.address,
+                            AckSeqPackage.pack_to_send(0, error))
+            lost_pkg_attempts += 1

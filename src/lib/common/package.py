@@ -33,15 +33,15 @@ class AckSeqPackage:
 
     @staticmethod
     def unpack_from_server(data: bytes) -> int:
-        return struct.unpack(ACK_SEQ_FORMAT, data)[0]
+        return struct.unpack(ACK_SEQ_FORMAT, data)
 
     @staticmethod
     def unpack_from_client(data: bytes) -> int:
         return AckSeqPackage.unpack_from_server(data)
 
     @staticmethod
-    def pack_to_send(seq: int) -> bytes:
-        return struct.pack(ACK_SEQ_FORMAT, seq)
+    def pack_to_send(seq: int, error: int) -> bytes:
+        return struct.pack(ACK_SEQ_FORMAT, seq, error)
 
 
 class NormalPackage:

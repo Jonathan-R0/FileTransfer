@@ -69,9 +69,6 @@ def sr_client_download(socket: SocketWrapper,
                 file_handler.append_chunk(received_chunk)
                 base += 1
         except TimeoutError:
-            if not end:
-                logging.debug(' A timeout has occurred, ' +
-                            'ending connection and deleting corrupted file')
             break
     logging.debug(f' Client {address} ended')
 

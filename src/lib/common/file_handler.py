@@ -1,5 +1,6 @@
 from lib.common.config import DATA_SIZE
 import os
+from lib.common.exceptions import DownloadingTemporaryFileError
 
 
 class FileHandler:
@@ -11,6 +12,8 @@ class FileHandler:
             mode: str,
             chunk_size: int = DATA_SIZE
             ):
+        if mode == 'rb' and filepath.endswith('.tmp'):
+            raise DownloadingTemporaryFileError
         self.file = open(
             file=(filepath + '.tmp')
             if is_upload and mode == 'wb' else filepath,

@@ -143,12 +143,16 @@ def handshake(
         arg_addr: tuple,
         handshake_attempts: int
         ) -> tuple[bytes, ...]:
+    if downloader_args.selective_repeat:
+        mode = 0
+    else:
+        mode = 1
     while handshake_attempts < MAX_ATTEMPTS:
         try:
             socket.sendto(arg_addr,
                           InitialHandshakePackage.pack_to_send(
                             0,
-                            1,
+                            mode,
                             0,
                             downloader_args.FILENAME)
                           )

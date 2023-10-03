@@ -81,7 +81,7 @@ class ServerClientDownload(ServerClient):
         while attempts <= MAX_ATTEMPTS:
             # Mando paquetes si tengo espacio en la ventana
             while next_seq_num < base + WINDOW_SIZE and not end:
-                if(seq_end > 0 and next_seq_num > seq_end):
+                if (seq_end > 0 and next_seq_num > seq_end):
                     break
                 chunk, end = self.file.read_next_chunk(next_seq_num)
                 if end:
@@ -97,11 +97,13 @@ class ServerClientDownload(ServerClient):
                     # Me guardo el paquete que mande para reenviarlo
                     # si es necesario
                     sent_chunks[next_seq_num] = chunk
+                    print(sent_chunks[next_seq_num])
                     next_seq_num += 1
+            
 
             try:
                 # Ahora recibo un ACK
-                raw_data = self.socket.recvfrom(ACK_SEQ_SIZE)
+                raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
                 seq = AckSeqPackage.unpack_from_server(raw_data)
                 if first_iteration:
                     first_iteration = False
@@ -116,11 +118,11 @@ class ServerClientDownload(ServerClient):
                     else:
                         base = base + WINDOW_SIZE
                     attempts = 0
-
                 # si el ACK esta en los que mande, lo saco de la lista
                 if seq in sent_chunks:
                     attempts = 0
                     del sent_chunks[seq]
+                print("A")
 
             except TimeoutError:
                 if first_iteration:
@@ -128,6 +130,7 @@ class ServerClientDownload(ServerClient):
                     return
                 # Timeout, reenvio todos los paquetes no confirmados
                 attempts += 1
+                print(len(sent_chunks))
                 if len(sent_chunks) > 0 and attempts <= MAX_ATTEMPTS:
                     logging.debug(' Timeout occurred. Resending ' +
                                   'unacknowledged chunks.')

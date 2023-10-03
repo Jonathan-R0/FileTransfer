@@ -28,13 +28,13 @@ Para el desarrollo del trabajo se asumió que el cliente y el servidor se encuen
 5. Los paquetes tienen un tamaño de:
     a. Initial Message: 262 bytes
     b. ACK-SEQ Package: 8 bytes
-    c. Data Package: 285 bytes
+    c. Data Package: 281 bytes
 
 6. El tamaño de la ventana para selective repeat es de 1000 paquetes.
 
 7. El tamaño máximo del nombre de un archivo es de 256 bytes.
 
-8. Se pueden tener hasta 100 clientes.
+8. Se pueden tener hasta 100 clientes en procesamiento concurrente.
 
 ## **Implementacion**
 
@@ -44,7 +44,7 @@ Para llevar a cabo una transferencia de archivos eficiente, es imperativo contar
 
 #### **Handshake**
 
-El proceso de Handshake desempeña un papel crucial en las transferencias de archivos a través de conexiones UDP, proporcionando un método estructurado y confiable para la comunicación entre el cliente y el servidor. Nuestro protocolo se caracteriza por un intercambio bidireccional de mensajes entre ambas partes, estableciendo así una conexión segura antes de la transmisión de datos. En primer lugar, el cliente inicia el proceso enviando un mensaje inicial al servidor, quien, a su vez, responde dependiendo de la operación solicitada: con un acknowledgment en el caso de la carga para que el cliente pueda a empezar mandar losd paquetes con el archivo o, en el caso de la descarga, envia directamente los paquetes con el archivo que se quiere descargar. 
+El proceso de Handshake desempeña un papel crucial en las transferencias de archivos a través de conexiones UDP, proporcionando un método estructurado y confiable para la comunicación entre el cliente y el servidor. Nuestro protocolo se caracteriza por un intercambio bidireccional de mensajes entre ambas partes, estableciendo así una conexión segura antes de la transmisión de datos. En primer lugar, el cliente inicia el proceso enviando un mensaje inicial al servidor, quien, a su vez, responde dependiendo de la operación solicitada: con un acknowledgment en el caso de la carga para que el cliente pueda a empezar mandar los paquetes con el archivo o, en el caso de la descarga, envia directamente los paquetes con el archivo que se quiere descargar. 
 
 El formato del mensaje inicial se compone de 262 bytes, divididos en un encabezado (header) de 6 bytes y un sector de información de 256 bytes. El encabezado contiene cuatro elementos fundamentales:
 
@@ -145,4 +145,3 @@ Nos resulto finalmente extremadamente complicado dividir las tareas entre los in
 Aprendimos que para el manejo de redes, es útil utilizar métodos de ejecución concurrente pero que deben ser cuidadosamente analizados para evitar crear vulnerabilidades en el host. Por ejemplo, podria pasar que si no verificamos la cantidad de clientes ejecutandose concurrentemente, un atacante podria enviar muchos requests en paralelo, lo cual agotaría los recursos del server producto de que cada thread necesita recursos de la maquina.
 
 Pudimos implementar correctamente los dos protocolos Stop and Wait y Selective Repeat.
-

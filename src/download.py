@@ -137,6 +137,7 @@ def sr_client_download(socket: SocketWrapper,
             if len(received_chunks) != 0 or \
                        (not has_end_pkg and len(received_chunks) == 0):
                 logging.debug(' A timeout has occurred, ' +
+
                               'ending connection and deleting corrupted file')
                 file_handler.rollback_write()
             break

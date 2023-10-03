@@ -40,7 +40,7 @@ def sw_client_upload(
             chunk, end = file_handler.read_next_chunk(seq)
             if end:
                 logging.debug(
-                    f' Sending last chunk: {chunk} with size: {len(chunk)}')
+                    f' Sending last chunk with size: {len(chunk)}')
             socket.sendto(address, NormalPackage.pack_to_send(ack, seq,
                           chunk, end, 0))
             while True:

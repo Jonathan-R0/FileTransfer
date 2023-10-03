@@ -42,8 +42,8 @@ class ServerClientDownload(ServerClient):
                 chunk, end = self.file.read_next_chunk(seq)
                 if end:
                     logging.debug(
-                        f' Sending last chunk: {chunk} with ' +
-                        'size: {len(chunk)} and end: {end}'
+                        f' Sending last chunk with ' +
+                        f'size: {len(chunk)}, ack: {ack}, seq:{seq} and end: {end}'
                     )
                 self.socket.sendto(
                     self.address,
@@ -53,8 +53,9 @@ class ServerClientDownload(ServerClient):
                     raw_data, _ = self.socket.recvfrom(ACK_SEQ_SIZE)
                     new_ack, new_seq = \
                         AckSeqPackage.unpack_from_client(raw_data)
+                    if seq == 1:
+                        logging.debug(f' New client: {self.address}')
                     logging.debug(f' Recieved ack: {new_ack} & seq: {new_seq}')
-                    logging.debug(f' New client: {self.address}')
                     if new_seq == seq == new_ack:
                         lost_pkg_attempts = 0
                         seq += 1
